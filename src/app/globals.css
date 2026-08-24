@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/*
+ * Drishya palette — muted, editorial earth/forest tones (Chartogne-Taillet feel).
+ * Defined as Tailwind v4 theme tokens, so each is available BOTH as a CSS
+ * variable (e.g. var(--color-brand)) and as utilities (bg-brand, text-brand…).
+ * Swap these values to rebrand the whole app.
+ */
+@theme {
+  --color-paper: #f7f5f0;
+  --color-ink: #1f2a24;
+  --color-brand: #2f6d4f;
+  --color-brand-dark: #234f3a;
+  --color-accent: #c8623a;
+  --color-muted: #6b7a70;
+  --color-line: #e3ded3;
+
+  /* Editorial serif for hero display type. Wired to next/font in layout.tsx. */
+  --font-display: var(--font-cormorant), ui-serif, Georgia, "Times New Roman",
+    serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Keep the Leaflet map below sticky UI (its panes default to high z-indexes). */
+.leaflet-container {
+  z-index: 0;
+  background: #dfe6df;
+  font: inherit;
+}
+
+/* Utility: the serif display face (hero district name, big numerals). */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/*
+ * Faint fibrous paper grain for the hero stage — a tiny SVG turbulence tile,
+ * inlined so there's no extra request. Sits under the map at low opacity.
+ */
+.paper-texture {
+  background-color: var(--color-paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/*
+ * Legibility scrim behind the hero info card: parchment fading out to the
+ * right, so the display type stays readable over the map without washing out
+ * the district shape. Stops are tight on purpose — full paper only under the
+ * text column, then a fast falloff.
+ */
+.hero-scrim {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-paper) 0%,
+    color-mix(in srgb, var(--color-paper) 90%, transparent) 24%,
+    color-mix(in srgb, var(--color-paper) 45%, transparent) 44%,
+    transparent 64%
+  );
+}
+
+/* Hide scrollbars on the district ruler while keeping it scrollable. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
