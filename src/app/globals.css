@@ -1,19 +1,50 @@
 @import "tailwindcss";
 
 /*
- * Drishya palette — muted, editorial earth/forest tones (Chartogne-Taillet feel).
- * Defined as Tailwind v4 theme tokens, so each is available BOTH as a CSS
- * variable (e.g. var(--color-brand)) and as utilities (bg-brand, text-brand…).
- * Swap these values to rebrand the whole app.
+ * Drishya palette — forest, brass and stone.
+ *
+ * Five roles carry the identity; a handful of derived tones exist only because
+ * the five can't legibly do every job (see the notes on each). Defined as
+ * Tailwind v4 theme tokens, so each is available BOTH as a CSS variable
+ * (var(--color-forest)) and as utilities (bg-forest, text-brass, border-stone…).
  */
 @theme {
-  --color-paper: #f7f5f0;
-  --color-ink: #1f2a24;
-  --color-brand: #2f6d4f;
-  --color-brand-dark: #234f3a;
-  --color-accent: #c8623a;
-  --color-muted: #6b7a70;
-  --color-line: #e3ded3;
+  /* ── The five roles ─────────────────────────────────────────────────── */
+  /* Primary: dock, headers, map landmass, footer. 10.9:1 on paper. */
+  --color-forest: #1f3d2b;
+  /* Secondary depth: hover/lifted states, dark surfaces. 8.7:1 on paper. */
+  --color-slate: #364a45;
+  /* Accent: CTAs, the district in frame, badges, gem markers. */
+  --color-brass: #b68d4c;
+  /* Structural neutral: dividers, borders, disabled fills, text on forest. */
+  --color-stone: #d1cfc7;
+  /* Base: page and card background. */
+  --color-paper: #f6f5f2;
+
+  /* ── Derived tones ──────────────────────────────────────────────────── */
+  /* Shadows and pressed states. Slate is *lighter* than forest, so it can't
+   * cast a shadow — this is the only tone darker than the primary. */
+  --color-forest-deep: #162c1f;
+  /* Brass for *text*: #b68d4c is 2.8:1 on paper, which small labels can't use.
+   * This is 4.6:1. Filled brass (buttons, markers) keeps the bright tone. */
+  --color-brass-ink: #8a6a2f;
+  /* Brass for text on forest, where the base brass is only 2.5:1. */
+  --color-brass-light: #d2ae72;
+  /* Secondary text on paper. Stone is 1.4:1 there — unreadable. This is 5.2:1. */
+  --color-sage: #5c6b62;
+  /* Slate lifted 15% toward stone. Raw slate on forest is 1.26:1, so a slate
+   * hover fill on the forest map is imperceptible; this is 1.74:1 — a clear
+   * step — while staying 2.3:1 from brass so hover ≠ active. */
+  --color-slate-lift: #4d5e59;
+
+  /* ── Semantic aliases (what components actually reference) ──────────── */
+  --color-ink: #1f3d2b; /* forest */
+  --color-brand: #1f3d2b; /* forest */
+  --color-brand-dark: #162c1f; /* forest-deep */
+  --color-accent: #b68d4c; /* brass */
+  --color-accent-ink: #8a6a2f; /* brass-ink */
+  --color-muted: #5c6b62; /* sage */
+  --color-line: #d1cfc7; /* stone */
 
   /* Editorial serif for hero display type. Wired to next/font in layout.tsx. */
   --font-display: var(--font-cormorant), ui-serif, Georgia, "Times New Roman",
@@ -22,6 +53,13 @@
 
 :root {
   color-scheme: light;
+
+  /* The dock floats, so it takes no layout height — these are only used to
+   * keep content clear of it. --header-h is the total vertical space it
+   * visually occupies (offset + height). */
+  --dock-top: 0.875rem;
+  --dock-h: 3.25rem;
+  --header-h: 4.125rem;
 }
 
 body {
@@ -34,16 +72,143 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Smooth programmatic scrolling (ruler clicks / arrow keys jump the camera). */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* Keep the Leaflet map below sticky UI (its panes default to high z-indexes). */
 .leaflet-container {
   z-index: 0;
-  background: #dfe6df;
+  background: var(--color-stone);
   font: inherit;
 }
 
 /* Utility: the serif display face (hero district name, big numerals). */
 .font-display {
   font-family: var(--font-display);
+}
+
+/*
+ * ── The dock ───────────────────────────────────────────────────────────────
+ * The navbar as a macOS dock: a floating forest pill that hovers over the page
+ * instead of sitting on it. Translucent, so the map drifts behind it; a stone
+ * top edge catches the light and a deep-forest shadow lifts it off the paper.
+ */
+.dock {
+  background-color: color-mix(in srgb, var(--color-forest) 84%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid color-mix(in srgb, var(--color-stone) 22%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--color-stone) 28%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--color-forest-deep) 70%, transparent),
+    0 18px 40px -18px color-mix(in srgb, var(--color-forest-deep) 65%, transparent),
+    0 4px 12px -6px color-mix(in srgb, var(--color-forest-deep) 40%, transparent);
+}
+
+/* Dock items rise a touch under the pointer, the way dock icons magnify. */
+.dock-item {
+  transition:
+    transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+.dock-item:hover,
+.dock-item:focus-visible {
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock-item {
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+  .dock-item:hover,
+  .dock-item:focus-visible {
+    transform: none;
+  }
+}
+
+/*
+ * ── Glassmorphism ────────────────────────────────────────────────────────
+ * One frosted surface used across the site (hero cards, ruler, district
+ * cards). Deliberately restrained: enough blur to separate a panel from the
+ * map behind it, not so much that the paper reads as plastic. The two inset
+ * shadows are the trick — a bright top edge and a faint bottom one give the
+ * pane thickness, like a real sheet of glass.
+ */
+.glass {
+  background-color: color-mix(in srgb, var(--color-paper) 58%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, #ffffff 55%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, #ffffff 65%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--color-forest) 6%, transparent),
+    0 20px 45px -28px color-mix(in srgb, var(--color-forest-deep) 55%, transparent);
+}
+
+/* Denser variant for panes that carry body copy over a busy map area. */
+.glass-strong {
+  background-color: color-mix(in srgb, var(--color-paper) 80%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, #ffffff 62%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, #ffffff 70%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--color-forest) 7%, transparent),
+    0 26px 60px -30px color-mix(in srgb, var(--color-forest-deep) 55%, transparent);
+}
+
+/*
+ * Interactive glass (the district cards): the sheen sweeps across on hover.
+ * ::after is the moving highlight.
+ */
+.glass-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.4s ease;
+}
+.glass-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, #ffffff 55%, transparent) 45%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--color-brass) 55%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, #ffffff 75%, transparent),
+    0 28px 50px -26px color-mix(in srgb, var(--color-forest-deep) 45%, transparent);
+}
+.glass-card:hover::after {
+  transform: translateX(120%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-card,
+  .glass-card::after {
+    transition: none;
+  }
+  .glass-card:hover {
+    transform: none;
+  }
 }
 
 /*
@@ -57,19 +222,62 @@ body {
 }
 
 /*
- * Legibility scrim behind the hero info card: parchment fading out to the
- * right, so the display type stays readable over the map without washing out
- * the district shape. Stops are tight on purpose — full paper only under the
- * text column, then a fast falloff.
+ * Edge vignette on the full-bleed hero: warms the extreme corners a touch so
+ * the glass panes have something to sit against and the stage feels lit from
+ * the middle. The bottom paper wash is deliberately light — on the dark forest
+ * landmass a strong one reads as the map dissolving rather than as depth.
  */
-.hero-scrim {
+.hero-vignette {
+  background:
+    radial-gradient(
+      120% 90% at 50% 45%,
+      transparent 55%,
+      color-mix(in srgb, var(--color-forest) 12%, transparent) 100%
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--color-paper) 40%, transparent) 0%,
+      transparent 18%
+    );
+}
+
+/*
+ * The wordmark's ink. The logo lives on the dark dock, so the gradient runs
+ * light-to-warm — paper into stone into brass — rather than the other way.
+ */
+.logo-ink {
   background-image: linear-gradient(
     100deg,
     var(--color-paper) 0%,
-    color-mix(in srgb, var(--color-paper) 90%, transparent) 24%,
-    color-mix(in srgb, var(--color-paper) 45%, transparent) 44%,
-    transparent 64%
+    var(--color-stone) 52%,
+    var(--color-brass-light) 118%
   );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scroll cue: the dot falls down the hairline, over and over. */
+@keyframes cue-fall {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(320%);
+    opacity: 0;
+  }
+}
+.cue-dot {
+  animation: cue-fall 2.1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cue-dot {
+    animation: none;
+  }
 }
 
 /* Hide scrollbars on the district ruler while keeping it scrollable. */
