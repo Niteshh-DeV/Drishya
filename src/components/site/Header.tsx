@@ -1,30 +1,54 @@
 import Link from "next/link";
+import { Logo } from "./Logo";
 
-/** Minimal site header. Guides/Assistant are later-phase features (shown as coming soon). */
+/** Nav entries. `soon` renders as a quiet, non-interactive dock item. */
+const ITEMS = [
+  { label: "Map", href: "/" },
+  { label: "Guides", soon: true },
+  { label: "Assistant", soon: true },
+] as const;
+
+/**
+ * The site nav as a macOS dock: a floating forest pill that hovers over the
+ * page instead of sitting on it. `fixed` + `pointer-events-none` on the rail
+ * means the hero map stays hoverable everywhere the pill isn't.
+ *
+ * The pill spans the page (up to `max-w-4xl`) rather than hugging its content,
+ * with the mark and the nav pushed to opposite ends — a content-width pill read
+ * as a stray chip floating over the map. On a phone it fills the rail, so type
+ * and padding step down at `sm` to keep three items on one line at 360px.
+ *
+ * Sizing lives in --dock-* / --header-h (globals.css); pages read --header-h to
+ * keep their first row clear of the pill.
+ */
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="text-xl font-semibold tracking-tight text-brand">
-            Drishya
-          </span>
-          <span className="hidden text-xs text-muted sm:inline">
-            Sudurpaschim
-          </span>
-        </Link>
-        <nav className="flex items-center gap-5 text-sm">
-          <Link href="/" className="text-ink/80 transition-colors hover:text-brand">
-            Map
-          </Link>
-          <span className="cursor-default text-muted/60" title="Coming soon">
-            Guides
-          </span>
-          <span className="cursor-default text-muted/60" title="Coming soon">
-            Assistant
-          </span>
+    <div className="pointer-events-none fixed inset-x-0 top-[var(--dock-top)] z-50 flex justify-center px-3 sm:px-4">
+      <header className="dock pointer-events-auto flex h-[var(--dock-h)] w-full max-w-4xl items-center justify-between rounded-full pl-3 pr-1.5 sm:pl-5 sm:pr-3">
+        <Logo />
+
+        <nav className="flex items-center gap-0.5 text-[13px] sm:gap-1.5 sm:text-sm">
+          {ITEMS.map((item) =>
+            "href" in item ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="dock-item rounded-full px-2.5 py-1.5 font-medium text-paper outline-none hover:bg-slate/70 focus-visible:bg-slate/70 focus-visible:ring-1 focus-visible:ring-brass/60 sm:px-4"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span
+                key={item.label}
+                title="Coming soon"
+                className="cursor-default rounded-full px-2.5 py-1.5 text-stone/55 sm:px-4"
+              >
+                {item.label}
+              </span>
+            ),
+          )}
         </nav>
-      </div>
-    </header>
+      </header>
+    </div>
   );
 }
