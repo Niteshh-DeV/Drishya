@@ -29,6 +29,18 @@ export function pathBounds(d: string): Bounds {
 }
 
 /**
+ * Smallest box containing all of `list` — used to frame the whole province as
+ * the hero's opening "overview" shot before the camera dives into a district.
+ */
+export function unionBounds(list: Bounds[]): Bounds {
+  const minX = Math.min(...list.map((b) => b.x));
+  const minY = Math.min(...list.map((b) => b.y));
+  const maxX = Math.max(...list.map((b) => b.x + b.w));
+  const maxY = Math.max(...list.map((b) => b.y + b.h));
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+/**
  * Produce a `[minX, minY, w, h]` viewBox that frames `b` (plus padding) at a
  * given aspect ratio — the "camera" target for one district. Expanding to the
  * stage aspect means the SVG fills the stage with no letterboxing.
