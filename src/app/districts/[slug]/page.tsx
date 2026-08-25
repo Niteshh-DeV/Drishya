@@ -42,16 +42,20 @@ export default async function DistrictPage({
     pois.filter((p) => p.category === cat).length;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <Link href="/" className="text-sm text-muted transition-colors hover:text-brand">
+    // The dock floats, so pages pad themselves clear of it.
+    <main className="mx-auto max-w-6xl px-4 pb-16 pt-[calc(var(--header-h)+1.5rem)]">
+      <Link
+        href="/"
+        className="text-sm text-muted transition-colors hover:text-accent-ink"
+      >
         ← Back to map
       </Link>
 
       <header className="mt-3">
-        <p className="text-sm font-medium uppercase tracking-widest text-accent">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-ink">
           {district.tagline}
         </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        <h1 className="font-display mt-1.5 text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
           {district.name}
         </h1>
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-ink/70">
@@ -84,17 +88,19 @@ export default async function DistrictPage({
       {/* Sample counts today; wired to real guide/stay/gem records in a later phase. */}
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
         {(Object.keys(CATEGORY_HEADING) as PoiCategory[]).map((cat) => (
-          <div key={cat} className="rounded-xl border border-line bg-white/50 p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+          <div key={cat} className="glass glass-card rounded-2xl p-5">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
               {CATEGORY_HEADING[cat]}
             </h2>
-            <p className="mt-1 text-2xl font-semibold text-ink">{countFor(cat)}</p>
+            <p className="font-display mt-1 text-3xl font-semibold text-ink">
+              {countFor(cat)}
+            </p>
             <p className="text-sm text-ink/60">sample marker(s) on the map</p>
           </div>
         ))}
       </section>
 
-      <p className="mt-8 rounded-lg border border-dashed border-line bg-white/40 p-4 text-sm text-ink/60">
+      <p className="glass mt-8 rounded-2xl p-5 text-sm text-ink/60">
         History, culture, safety and destination content for {district.name} will
         live here — added by the content team in a later phase.
       </p>
