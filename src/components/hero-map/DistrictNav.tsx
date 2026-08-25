@@ -6,6 +6,7 @@ import type { District } from "@/lib/types";
 
 interface DistrictNavProps {
   districts: District[];
+  /** Index of the framed district, or -1 while the province overview is framed. */
   activeIndex: number;
   onSelect: (index: number) => void;
   /** Preview a district on the map while its tick is hovered/focused. */
@@ -15,8 +16,9 @@ interface DistrictNavProps {
 /**
  * The bottom "ruler" navigator: one numbered tick per district. The active
  * district is lifted and accented; the rest are quiet marks. Clicking (or
- * arrowing) moves the hero camera, and hovering a tick previews that district
- * on the map. Purely presentational — all state lives in the parent `HeroMap`.
+ * arrowing) scrolls the hero camera to that district, and hovering a tick
+ * previews it on the map. Purely presentational — all state lives in the
+ * parent `HeroMap`.
  */
 export function DistrictNav({
   districts,
@@ -32,6 +34,7 @@ export function DistrictNav({
   // centered. Scrolling the container directly (rather than scrollIntoView)
   // avoids yanking the page vertically.
   useEffect(() => {
+    if (activeIndex < 0) return;
     const list = listRef.current;
     const btn = activeRef.current;
     if (!list || !btn) return;
@@ -48,7 +51,7 @@ export function DistrictNav({
       role="tablist"
       aria-label="Choose a district"
       onPointerLeave={() => onHover?.(null)}
-      className="no-scrollbar flex items-end gap-1 overflow-x-auto px-2 sm:justify-center"
+      className="no-scrollbar flex items-end gap-1 overflow-x-auto px-1 sm:justify-center"
     >
       {districts.map((d, i) => {
         const isActive = i === activeIndex;
@@ -66,23 +69,25 @@ export function DistrictNav({
             }}
             onFocus={() => onHover?.(d.id)}
             onBlur={() => onHover?.(null)}
-            className="group relative flex shrink-0 flex-col items-center gap-1.5 px-2 py-2 outline-none"
+            className="group relative flex shrink-0 flex-col items-center gap-1.5 rounded-xl px-2 py-1.5 outline-none transition-colors hover:bg-forest/8 focus-visible:bg-forest/12"
           >
-            {/* number */}
+            {/* number — brass-ink, since bright brass is only 2.8:1 on paper */}
             <span
               className={`text-[11px] tabular-nums transition-colors ${
-                isActive ? "text-accent" : "text-muted/60 group-hover:text-ink/70"
+                isActive
+                  ? "font-semibold text-accent-ink"
+                  : "text-muted/60 group-hover:text-ink/70"
               }`}
             >
               {String(i + 1).padStart(2, "0")}
             </span>
 
-            {/* tick */}
+            {/* tick — the one place bright brass appears, widened so it reads */}
             <span
-              className={`w-px origin-bottom rounded-full transition-all duration-300 ${
+              className={`origin-bottom rounded-full transition-all duration-300 ${
                 isActive
-                  ? "h-5 bg-accent"
-                  : "h-2.5 bg-line group-hover:h-3.5 group-hover:bg-muted group-focus-visible:h-3.5 group-focus-visible:bg-muted"
+                  ? "h-5 w-[3px] bg-brass"
+                  : "h-2.5 w-px bg-line group-hover:h-3.5 group-hover:bg-muted group-focus-visible:h-3.5 group-focus-visible:bg-muted"
               }`}
             />
 
