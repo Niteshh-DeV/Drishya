@@ -21,10 +21,14 @@ import type {
 } from "@/lib/types";
 import { poisForDistrict } from "@/data/sample-pois";
 
+/*
+ * Marker colours follow the palette's roles: forest for guides, slate-teal for
+ * stays, brass for hidden gems (the palette's named "hidden gem" accent).
+ */
 const CATEGORY_COLOR: Record<PoiCategory, string> = {
-  guide: "#2f6d4f",
-  stay: "#c8623a",
-  "hidden-gem": "#3b6ea5",
+  guide: "#1f3d2b",
+  stay: "#364a45",
+  "hidden-gem": "#b68d4c",
 };
 
 const CATEGORY_LABEL: Record<PoiCategory, string> = {
@@ -69,7 +73,7 @@ export default function DistrictMap({ district }: { district: District }) {
   }, [district.id]);
 
   return (
-    <div className="relative h-[65vh] min-h-[420px] w-full overflow-hidden rounded-xl border border-line">
+    <div className="relative h-[65vh] min-h-[420px] w-full overflow-hidden rounded-2xl border border-line">
       <MapContainer
         center={district.center}
         zoom={9}
@@ -85,10 +89,10 @@ export default function DistrictMap({ district }: { district: District }) {
             <GeoJSON
               data={feature}
               style={{
-                color: "#234f3a",
+                color: "#1f3d2b",
                 weight: 2,
-                fillColor: "#2f6d4f",
-                fillOpacity: 0.08,
+                fillColor: "#1f3d2b",
+                fillOpacity: 0.1,
               }}
             />
             <FitToFeature feature={feature} />
@@ -100,7 +104,7 @@ export default function DistrictMap({ district }: { district: District }) {
             center={poi.position}
             radius={8}
             pathOptions={{
-              color: "#ffffff",
+              color: "#f6f5f2",
               weight: 2,
               fillColor: CATEGORY_COLOR[poi.category],
               fillOpacity: 1,
@@ -122,8 +126,10 @@ export default function DistrictMap({ district }: { district: District }) {
         ))}
       </MapContainer>
 
-      <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] rounded-lg border border-line bg-paper/95 px-3 py-2 text-xs shadow">
-        <p className="mb-1 font-semibold text-ink">Legend</p>
+      <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] rounded-xl border border-line bg-paper/95 px-3 py-2 text-xs shadow-sm">
+        <p className="mb-1 font-semibold uppercase tracking-[0.14em] text-muted">
+          Legend
+        </p>
         <ul className="space-y-1">
           {(Object.keys(CATEGORY_LABEL) as PoiCategory[]).map((c) => (
             <li key={c} className="flex items-center gap-2 text-ink/80">
