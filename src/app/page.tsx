@@ -1,50 +1,73 @@
 import Link from "next/link";
 import { HeroMap } from "@/components/hero-map/HeroMap";
+import { Reveal } from "@/components/site/Reveal";
 import { districts } from "@/data/districts";
 
 export default function Home() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
-      <section className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent">
-          Sudurpaschim Province · Nepal
-        </p>
-        <h1 className="font-display mt-3 text-5xl font-semibold tracking-tight text-ink sm:text-6xl">
-          Explore Drishya
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-ink/70">
-          Nine districts of Nepal&apos;s far west, one at a time. Pick a district
-          along the bottom to frame it, trace its landmarks, then dive in for
-          maps, guides, stays and hidden gems.
-        </p>
-      </section>
-
-      <div className="mt-10">
-        <HeroMap />
-      </div>
+    <main>
+      {/*
+       * Full-bleed pinned hero: one screen tall, scroll flies the camera from
+       * the province overview through all nine districts. Its own section owns
+       * the scroll distance, so nothing here needs a max-width.
+       */}
+      <HeroMap />
 
       {/* Text/grid fallback — works without JS, helps SEO, and lists everything. */}
-      <section className="mt-16">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
-          All districts
-        </h2>
-        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {districts.map((d) => (
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
+        <Reveal>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.24em] text-accent-ink">
+                All districts
+              </h2>
+              <p className="font-display mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+                Nine ways in
+              </p>
+            </div>
+            <span className="hidden shrink-0 text-sm text-muted sm:block">
+              {districts.length} districts ·{" "}
+              {districts
+                .reduce((sum, d) => sum + d.areaSqKm, 0)
+                .toLocaleString(undefined, { maximumFractionDigits: 0 })}{" "}
+              km²
+            </span>
+          </div>
+        </Reveal>
+
+        <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {districts.map((d, i) => (
             <li key={d.slug}>
-              <Link
-                href={`/districts/${d.slug}`}
-                className="group block rounded-xl border border-line bg-white/50 p-4 transition-colors hover:border-brand hover:bg-white"
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-medium text-ink group-hover:text-brand">
-                    {d.name}
+              <Reveal delay={(i % 3) * 0.07}>
+                <Link
+                  href={`/districts/${d.slug}`}
+                  className="glass glass-card group block h-full rounded-2xl p-5"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-display text-2xl font-semibold text-ink transition-colors group-hover:text-accent-ink">
+                      {d.name}
+                    </span>
+                    <span className="shrink-0 text-[11px] tabular-nums text-muted">
+                      {d.areaSqKm.toLocaleString()} km²
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-sm font-medium text-accent-ink">
+                    {d.tagline}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-ink/60">
+                    {d.blurb}
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.16em] text-muted transition-colors group-hover:text-accent-ink">
+                    Explore
+                    <span
+                      aria-hidden
+                      className="transition-transform duration-300 group-hover:translate-x-1"
+                    >
+                      →
+                    </span>
                   </span>
-                  <span className="shrink-0 text-xs text-muted">
-                    {d.areaSqKm.toLocaleString()} km²
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-ink/60">{d.tagline}</p>
-              </Link>
+                </Link>
+              </Reveal>
             </li>
           ))}
         </ul>
