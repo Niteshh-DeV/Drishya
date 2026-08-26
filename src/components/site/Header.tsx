@@ -5,7 +5,8 @@ import { ThemeToggle } from "./ThemeToggle";
 /** Nav entries. `soon` renders as a quiet, non-interactive dock item. */
 const ITEMS = [
   { label: "Map", href: "/" },
-  { label: "Guides", soon: true },
+  { label: "Blog", href: "/blog" },
+  { label: "Guide", href: "/guide-connect" },
   { label: "Assistant", soon: true },
 ] as const;
 
@@ -26,7 +27,7 @@ export function Header() {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-[var(--dock-top)] z-50 flex justify-center px-3 sm:px-4">
       <header className="dock pointer-events-auto flex h-[var(--dock-h)] w-full max-w-4xl items-center justify-between rounded-full pl-3 pr-1.5 sm:pl-5 sm:pr-3">
-        <Logo />
+        <Logo href="/#top" />
 
         <div className="flex items-center gap-0.5">
           <nav className="flex items-center gap-0.5 text-[13px] sm:gap-1.5 sm:text-sm">
