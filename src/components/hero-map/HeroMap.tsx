@@ -83,19 +83,19 @@ const MARKER_PX = 13;
  * The hovered district also takes a brass hairline, previewing the brass it
  * becomes when clicked.
  */
-const ACTIVE_FILL = "#b68d4c"; // brass — the district in frame
-const HOVER_FILL = "#4d5e59"; // slate, lifted
-const BASE_FILL = "#1f3d2b"; // forest — the province
-const ACTIVE_STROKE = "#162c1f"; // forest-deep ink, 4.9:1 on brass
-const HOVER_STROKE = "#b68d4c"; // brass, previewing the active state
-const BORDER_STROKE = "#d1cfc7"; // stone hairlines between districts
+const ACTIVE_FILL = "var(--color-brass)";
+const HOVER_FILL = "var(--color-slate-lift)";
+const BASE_FILL = "var(--color-forest)";
+const ACTIVE_STROKE = "var(--color-forest-deep)";
+const HOVER_STROKE = "var(--color-brass)";
+const BORDER_STROKE = "var(--color-stone)";
 
 /** SVG paths keyed by district id (the JSON is in a different order than `districts`). */
 const svgById = Object.fromEntries(svg.districts.map((d) => [d.id, d]));
 
 /** Tiny centered glyph per landmark kind, drawn in ±4 local units (paper on forest). */
 function Glyph({ kind }: { kind: LandmarkKind }) {
-  const paper = "#f6f5f2";
+  const paper = "var(--color-dock-text)";
   if (kind === "peak") {
     return <path d="M -3.6 3 L 0 -4 L 3.6 3 Z" fill={paper} />;
   }
@@ -533,10 +533,10 @@ export function HeroMap() {
                           cx={0}
                           cy={0}
                           r={9}
-                          fill="#f6f5f2"
+                          fill="var(--color-dock-text)"
                           fillOpacity={0.9}
                         />
-                        <circle cx={0} cy={0} r={7.5} fill="#1f3d2b" />
+                        <circle cx={0} cy={0} r={7.5} fill="var(--color-forest)" />
                         <Glyph kind={lm.kind} />
                         <text
                           x={13}
@@ -546,9 +546,9 @@ export function HeroMap() {
                             fontFamily: "var(--font-display)",
                             fontSize: 15,
                             fontWeight: 600,
-                            fill: "#1f3d2b",
+                            fill: "var(--color-forest)",
                             paintOrder: "stroke",
-                            stroke: "#f6f5f2",
+                            stroke: "var(--color-dock-text)",
                             strokeWidth: 3.5,
                             strokeLinejoin: "round",
                           }}
@@ -682,16 +682,30 @@ export function HeroMap() {
           className="glass pointer-events-none absolute right-6 top-[calc(var(--header-h)+1.25rem)] z-20 hidden rounded-full p-2 sm:right-8 sm:block"
         >
           <svg width="48" height="48" viewBox="0 0 56 56" fill="none">
-            <circle cx="28" cy="28" r="26" stroke="#1f3d2b" strokeOpacity="0.35" />
+            <circle
+              cx="28"
+              cy="28"
+              r="26"
+              stroke="var(--color-forest)"
+              strokeOpacity="0.35"
+            />
             {/* North needle in brass-ink rather than bright brass: #b68d4c is
              * only 2.8:1 on paper, and a faint needle reads as a mistake. */}
-            <path d="M28 11 L32 28 L28 33 L24 28 Z" fill="#8a6a2f" />
-            <path d="M28 45 L24 28 L28 23 L32 28 Z" fill="#1f3d2b" opacity="0.45" />
+            <path d="M28 11 L32 28 L28 33 L24 28 Z" fill="var(--color-brass-ink)" />
+            <path
+              d="M28 45 L24 28 L28 23 L32 28 Z"
+              fill="var(--color-forest)"
+              opacity="0.45"
+            />
             <text
               x="28"
               y="9"
               textAnchor="middle"
-              style={{ fontSize: 8, fill: "#1f3d2b", fontWeight: 700 }}
+              style={{
+                fontSize: 8,
+                fill: "var(--color-forest)",
+                fontWeight: 700,
+              }}
             >
               N
             </text>
