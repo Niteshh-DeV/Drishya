@@ -45,6 +45,7 @@
   --color-accent-ink: #8a6a2f; /* brass-ink */
   --color-muted: #5c6b62; /* sage */
   --color-line: #d1cfc7; /* stone */
+  --color-dock-text: #f6f5f2;
 
   /* Editorial serif for hero display type. Wired to next/font in layout.tsx. */
   --font-display: var(--font-cormorant), ui-serif, Georgia, "Times New Roman",
@@ -62,9 +63,32 @@
   --header-h: 4.125rem;
 }
 
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-forest: #173523;
+  --color-slate: #2e4840;
+  --color-brass: #d2ae72;
+  --color-stone: #718278;
+  --color-paper: #142019;
+  --color-forest-deep: #0b1510;
+  --color-brass-ink: #e0bd7e;
+  --color-brass-light: #edd09a;
+  --color-sage: #aab9ae;
+  --color-slate-lift: #668071;
+  --color-ink: #e7eee8;
+  --color-brand: #9fc5a8;
+  --color-brand-dark: #0b1510;
+  --color-accent: #d2ae72;
+  --color-accent-ink: #e0bd7e;
+  --color-muted: #aab9ae;
+  --color-line: #52645a;
+  --color-dock-text: #e7eee8;
+}
+
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+  transition: background-color 0.25s ease, color 0.25s ease;
   font-family:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
@@ -87,6 +111,10 @@ html {
   z-index: 0;
   background: var(--color-stone);
   font: inherit;
+}
+
+html[data-theme="dark"] .leaflet-tile {
+  filter: brightness(0.62) saturate(0.8);
 }
 
 /* Utility: the serif display face (hero district name, big numerals). */
@@ -248,7 +276,7 @@ html {
 .logo-ink {
   background-image: linear-gradient(
     100deg,
-    var(--color-paper) 0%,
+    var(--color-dock-text) 0%,
     var(--color-stone) 52%,
     var(--color-brass-light) 118%
   );
