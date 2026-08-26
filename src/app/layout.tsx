@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/site/Header";
+import { Footer } from "@/components/site/Footer";
+import { PageTransition } from "@/components/site/PageTransition";
 
 /** Editorial serif for hero display type; exposed as the CSS var --font-cormorant. */
 const cormorant = Cormorant_Garamond({
@@ -32,7 +34,8 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen">
         <Header />
-        {children}
+        <PageTransition>{children}</PageTransition>
+        <Footer />
       </body>
     </html>
   );
