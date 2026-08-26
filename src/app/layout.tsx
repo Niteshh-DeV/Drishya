@@ -23,6 +23,13 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" className={cormorant.variable}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(()=>{const t=localStorage.getItem("drishya-theme");if(t==="dark")document.documentElement.dataset.theme="dark"})()`,
+          }}
+        />
+      </head>
       <body className="min-h-screen">
         <Header />
         {children}
