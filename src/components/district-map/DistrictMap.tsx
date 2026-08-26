@@ -26,9 +26,9 @@ import { poisForDistrict } from "@/data/sample-pois";
  * stays, brass for hidden gems (the palette's named "hidden gem" accent).
  */
 const CATEGORY_COLOR: Record<PoiCategory, string> = {
-  guide: "#1f3d2b",
-  stay: "#364a45",
-  "hidden-gem": "#b68d4c",
+  guide: "var(--color-forest)",
+  stay: "var(--color-slate)",
+  "hidden-gem": "var(--color-brass)",
 };
 
 const CATEGORY_LABEL: Record<PoiCategory, string> = {
@@ -89,9 +89,9 @@ export default function DistrictMap({ district }: { district: District }) {
             <GeoJSON
               data={feature}
               style={{
-                color: "#1f3d2b",
+                color: "var(--color-forest)",
                 weight: 2,
-                fillColor: "#1f3d2b",
+                fillColor: "var(--color-forest)",
                 fillOpacity: 0.1,
               }}
             />
@@ -104,7 +104,7 @@ export default function DistrictMap({ district }: { district: District }) {
             center={poi.position}
             radius={8}
             pathOptions={{
-              color: "#f6f5f2",
+              color: "var(--color-dock-text)",
               weight: 2,
               fillColor: CATEGORY_COLOR[poi.category],
               fillOpacity: 1,
