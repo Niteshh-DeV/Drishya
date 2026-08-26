@@ -5,7 +5,7 @@ import { districts } from "@/data/districts";
 
 export default function Home() {
   return (
-    <main>
+    <main id="top">
       {/*
        * Full-bleed pinned hero: one screen tall, scroll flies the camera from
        * the province overview through all nine districts. Its own section owns
@@ -14,7 +14,10 @@ export default function Home() {
       <HeroMap />
 
       {/* Text/grid fallback — works without JS, helps SEO, and lists everything. */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
+      <section
+        id="all-districts"
+        className="mx-auto max-w-6xl px-4 py-20 sm:py-28"
+      >
         <Reveal>
           <div className="flex items-end justify-between gap-4">
             <div>
