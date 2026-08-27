@@ -17,8 +17,8 @@ const ITEMS = [
  *
  * The pill spans the page (up to `max-w-4xl`) rather than hugging its content,
  * with the mark and the nav pushed to opposite ends — a content-width pill read
- * as a stray chip floating over the map. On a phone it fills the rail, so type
- * and padding step down at `sm` to keep three items on one line at 360px.
+ * as a stray chip floating over the map. On a phone the navigation collapses
+ * into a compact dropdown so the pill stays light and uncluttered.
  *
  * Sizing lives in --dock-* / --header-h (globals.css); pages read --header-h to
  * keep their first row clear of the pill.
@@ -30,13 +30,13 @@ export function Header() {
         <Logo href="/#top" />
 
         <div className="flex items-center gap-0.5">
-          <nav className="flex items-center gap-0.5 text-[13px] sm:gap-1.5 sm:text-sm">
+          <nav className="hidden items-center gap-1.5 text-sm sm:flex">
             {ITEMS.map((item) =>
               "href" in item ? (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="dock-item rounded-full px-2.5 py-1.5 font-medium text-dock-text outline-none hover:bg-slate/70 focus-visible:bg-slate/70 focus-visible:ring-1 focus-visible:ring-brass/60 sm:px-4"
+                  className="dock-item rounded-full px-4 py-1.5 font-medium text-dock-text outline-none hover:bg-slate/70 focus-visible:bg-slate/70 focus-visible:ring-1 focus-visible:ring-brass/60"
                 >
                   {item.label}
                 </Link>
@@ -44,13 +44,53 @@ export function Header() {
                 <span
                   key={item.label}
                   title="Coming soon"
-                  className="cursor-default rounded-full px-2.5 py-1.5 text-stone/55 sm:px-4"
+                  className="cursor-default rounded-full px-4 py-1.5 text-stone/55"
                 >
                   {item.label}
                 </span>
               ),
             )}
           </nav>
+          <details className="group relative sm:hidden">
+            <summary
+              aria-label="Open navigation menu"
+              className="dock-item flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full text-sm font-medium text-dock-text outline-none marker:hidden hover:bg-slate/70 focus-visible:bg-slate/70 focus-visible:ring-1 focus-visible:ring-brass/60 [&::-webkit-details-marker]:hidden"
+            >
+              <svg
+                aria-hidden
+                viewBox="0 0 20 20"
+                className="h-[18px] w-[18px]"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.6"
+              >
+                <path d="M3 5h14M3 10h14M3 15h14" />
+              </svg>
+            </summary>
+            <nav className="dock absolute right-0 top-full z-10 mt-2 min-w-44 rounded-2xl p-1.5 text-sm shadow-xl">
+              {ITEMS.map((item) =>
+                "href" in item ? (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="block rounded-xl px-4 py-2.5 font-medium text-dock-text outline-none hover:bg-slate/70 focus-visible:bg-slate/70 focus-visible:ring-1 focus-visible:ring-brass/60"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span
+                    key={item.label}
+                    title="Coming soon"
+                    className="block rounded-xl px-4 py-2.5 text-stone/55"
+                  >
+                    {item.label}
+                  </span>
+                ),
+              )}
+            </nav>
+          </details>
           <ThemeToggle />
         </div>
       </header>
