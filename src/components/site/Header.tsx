@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import type { MouseEvent } from "react";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -9,6 +12,10 @@ const ITEMS = [
   { label: "Guide", href: "/guide-connect" },
   { label: "Assistant", soon: true },
 ] as const;
+
+function closeMobileMenu(event: MouseEvent<HTMLElement>) {
+  event.currentTarget.closest("details")?.removeAttribute("open");
+}
 
 /**
  * The site nav as a macOS dock: a floating forest pill that hovers over the
@@ -75,6 +82,7 @@ export function Header() {
                   <Link
                     key={item.label}
                     href={item.href}
+                    onClick={closeMobileMenu}
                     className="block rounded-xl px-4 py-2.5 font-medium text-dock-text outline-none hover:bg-slate/70 focus-visible:bg-slate/70 focus-visible:ring-1 focus-visible:ring-brass/60"
                   >
                     {item.label}
@@ -83,6 +91,7 @@ export function Header() {
                   <span
                     key={item.label}
                     title="Coming soon"
+                    onClick={closeMobileMenu}
                     className="block rounded-xl px-4 py-2.5 text-stone/55"
                   >
                     {item.label}
