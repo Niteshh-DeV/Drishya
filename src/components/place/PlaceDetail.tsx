@@ -1,21 +1,21 @@
-"use client";
-
 import Link from "next/link";
-import { motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
-import type { Destination } from "@/lib/types";
-import type { District } from "@/lib/types";
+import { Reveal } from "@/components/site/Reveal";
+import { cloudinaryUrl, coverImageUrl } from "@/lib/images";
+import type { Destination, DestinationImage, District } from "@/lib/types";
 import { DestinationMapLoader } from "./DestinationMapLoader";
+import { PlaceCoverImage } from "./PlaceCoverImage";
+import { PlaceMenu } from "./PlaceMenu";
 
 interface PlaceDetailProps {
   destination: Destination;
   district: District;
-  nextPlace?: Destination;
+  nextPlace?: { slug: string; name: string };
   nextDistrict?: District;
 }
 
-function imageFor(destination: Destination) {
-  return destination.media?.photos?.[0]?.secureUrl;
+/** Keeps [label, text] rows whose text is present. */
+function present(rows: [string, string | undefined][]): [string, string][] {
+  return rows.filter((row): row is [string, string] => Boolean(row[1]));
 }
 
 function EditorialImage({
@@ -24,49 +24,27 @@ function EditorialImage({
   index,
 }: {
   destination: Destination;
-  photo: NonNullable<NonNullable<Destination["media"]>["photos"]>[number];
+  photo: DestinationImage;
   index: number;
 }) {
-  const reduced = useReducedMotion();
-
   return (
-    <motion.img
-      src={photo.secureUrl}
+    <img
+      src={cloudinaryUrl(photo.secureUrl, 1600)}
       alt={`${destination.name} view ${index + 2}`}
+      loading="lazy"
+      decoding="async"
       className="h-[min(58vh,34rem)] w-full object-cover"
-      initial={reduced ? undefined : { opacity: 0, y: 24 }}
-      whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.35 }}
-      transition={{
-        duration: reduced ? 0 : 0.7,
-        ease: [0.16, 1, 0.3, 1],
-      }}
     />
   );
 }
 
-function RevealSection({
-  children,
-  delay = 0,
-  className = "",
-}: {
+/** Place-page reveal: a longer rise than the site default. */
+function RevealSection(props: {
   children: React.ReactNode;
   delay?: number;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
-  if (reduced) return <div className={className}>{children}</div>;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.35 }}
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+  return <Reveal y={40} {...props} />;
 }
 
 export function PlaceDetail({
@@ -75,110 +53,49 @@ export function PlaceDetail({
   nextPlace,
   nextDistrict,
 }: PlaceDetailProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedMenuDetail, setSelectedMenuDetail] = useState<string | null>(
-    null,
-  );
-  const reduced = useReducedMotion();
-  const image = imageFor(destination);
+  const image = coverImageUrl(destination);
   const gallery = destination.media?.photos?.filter(
     (photo) => photo.secureUrl !== image,
   ) ?? [];
   const paragraphs = destination.longDescription
     ? destination.longDescription.split(/\n+/).filter(Boolean)
     : [destination.shortDescription];
-  const notes = [
+  const notes = present([
     ["Cultural note", destination.culturalNote],
     ["Best for", destination.bestFor],
     ["Safety notes", destination.safetyNotes],
-  ].filter((note): note is [string, string] => Boolean(note[1]));
-  const info = [
+  ]);
+  const info = present([
     ["Entry", destination.entryFee],
     ["Best time", destination.bestSeasons.join(", ")],
     ["Budget", destination.budget],
     ["Nearest town", destination.nearestTown],
     ["Elevation", destination.elevationM ? `${destination.elevationM} m` : undefined],
     ["Hours", destination.openingHours],
-  ].filter((row): row is [string, string] => Boolean(row[1]));
+  ]);
+  const menuItems = present([
+    ["Description", destination.longDescription ?? destination.shortDescription],
+    ["Safety notes", destination.safetyNotes],
+    ["How to get there", destination.howToGetThere],
+    ["Best time", destination.bestTimeNote ?? destination.bestSeasons.join(", ")],
+    ["Nearby stays & food", destination.nearbyStaysFood],
+    ["Cultural note", destination.culturalNote],
+  ]);
+  const practical = present([
+    ["How to get there", destination.howToGetThere],
+    ["Nearby stays & food", destination.nearbyStaysFood],
+    ["Best-time note", destination.bestTimeNote],
+    ["Budget note", destination.budgetNote],
+  ]);
   const tags = [...destination.category, ...destination.interestTags];
 
   return (
     <main className="place-page min-h-screen bg-paper text-ink">
-      <div className="place-topbar">
-        <button
-          type="button"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-expanded={menuOpen}
-          aria-controls="destination-menu"
-          className="text-xs uppercase tracking-[0.22em] text-muted transition-colors hover:text-accent-ink"
-        >
-          Menu {menuOpen ? "−" : "+"}
-        </button>
-        <Link href="/map" className="text-xs uppercase tracking-[0.22em] text-ink">
-          Map
-        </Link>
-      </div>
-
-      {menuOpen && (
-        <aside
-          id="destination-menu"
-          className="fixed left-5 top-20 z-30 max-h-[calc(100vh-6rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto border border-line bg-paper/95 p-5 text-ink shadow-[0_24px_60px_-24px_color-mix(in_srgb,var(--color-forest-deep)_45%,transparent)] backdrop-blur-xl sm:left-10"
-        >
-          <div className="flex items-start justify-between gap-5">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.22em] text-muted">
-                {district.name}
-              </p>
-              <h2 className="font-display mt-2 text-3xl leading-none">
-                {destination.name}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setMenuOpen(false)}
-              aria-label="Close destination menu"
-              className="text-xl leading-none text-muted hover:text-accent-ink"
-            >
-              ×
-            </button>
-          </div>
-          <div className="mt-5 border-t border-line pt-4">
-            <div className="grid gap-2">
-              {[
-                ["Description", destination.longDescription ?? destination.shortDescription],
-                ["Safety notes", destination.safetyNotes],
-                ["How to get there", destination.howToGetThere],
-                ["Best time", destination.bestTimeNote ?? destination.bestSeasons.join(", ")],
-                ["Nearby stays & food", destination.nearbyStaysFood],
-                ["Cultural note", destination.culturalNote],
-              ]
-                .filter((item): item is [string, string] => Boolean(item[1]))
-                .map(([label, value]) => (
-                  <div key={label}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedMenuDetail((selected) =>
-                          selected === label ? null : label,
-                        )
-                      }
-                      aria-expanded={selectedMenuDetail === label}
-                      className="flex w-full items-center justify-between border border-line px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.14em] text-ink transition-colors hover:border-accent-ink hover:text-accent-ink"
-                    >
-                      {label}
-                      <span aria-hidden>{selectedMenuDetail === label ? "−" : "+"}</span>
-                    </button>
-                    {selectedMenuDetail === label && (
-                      <p className="border-x border-b border-line bg-paper/60 px-3 py-3 text-sm leading-relaxed text-muted">
-                        {value}
-                      </p>
-                    )}
-                  </div>
-                ))}
-            </div>
-          </div>
-        </aside>
-      )}
+      <PlaceMenu
+        districtName={district.name}
+        placeName={destination.name}
+        items={menuItems}
+      />
 
       <div className="mx-auto max-w-[90rem] px-5 pb-24 pt-32 sm:px-10 lg:px-16">
         <RevealSection className="mx-auto max-w-5xl text-center">
@@ -235,40 +152,29 @@ export function PlaceDetail({
         </RevealSection>
         </div>
 
-        {(destination.howToGetThere ||
-          destination.nearbyStaysFood ||
-          destination.bestTimeNote ||
-          destination.budgetNote) && (
+        {practical.length > 0 && (
           <RevealSection className="mx-auto mt-28 max-w-5xl" delay={0.15}>
             <div className="grid gap-8 border-y border-line py-8 sm:grid-cols-2">
-              {[
-                ["How to get there", destination.howToGetThere],
-                ["Nearby stays & food", destination.nearbyStaysFood],
-                ["Best-time note", destination.bestTimeNote],
-                ["Budget note", destination.budgetNote],
-              ]
-                .filter((item): item is [string, string] => Boolean(item[1]))
-                .map(([label, value]) => (
-                  <div key={label}>
-                    <h2 className="text-[11px] uppercase tracking-[0.24em] text-muted">
-                      {label}
-                    </h2>
-                    <p className="mt-3 text-base leading-relaxed text-ink">
-                      {value}
-                    </p>
-                  </div>
-                ))}
+              {practical.map(([label, value]) => (
+                <div key={label}>
+                  <h2 className="text-[11px] uppercase tracking-[0.24em] text-muted">
+                    {label}
+                  </h2>
+                  <p className="mt-3 text-base leading-relaxed text-ink">
+                    {value}
+                  </p>
+                </div>
+              ))}
             </div>
           </RevealSection>
         )}
 
         {image && (
           <RevealSection className="mx-[calc(50%-50vw)] mt-28" delay={0.15}>
-            <motion.img
-              layoutId={destination.slug}
-              src={image}
+            <PlaceCoverImage
+              slug={destination.slug}
+              src={cloudinaryUrl(image, 2000)}
               alt={destination.name}
-              className="h-[min(70vh,48rem)] w-full object-cover"
             />
             {destination.media?.credit && (
               <p className="mt-3 text-right text-[10px] uppercase tracking-[0.16em] text-muted">

@@ -5,8 +5,9 @@ import { districts, getDistrict } from "@/data/districts";
 import { DistrictMapLoader } from "@/components/district-map/DistrictMapLoader";
 import {
   getDestinationsForDistrict,
-  getMappableDestinations,
+  toMapPlaces,
 } from "@/lib/db/destinations";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -60,15 +61,8 @@ export default async function DistrictPage({
   const district = getDistrict(slug);
   if (!district) notFound();
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.SITE_URL ||
-    "https://drishya.vercel.app";
-
-  const [destinations, mappableDestinations] = await Promise.all([
-    getDestinationsForDistrict(district.id),
-    getMappableDestinations(district.id),
-  ]);
+  const destinations = await getDestinationsForDistrict(district.id);
+  const mapPlaces = toMapPlaces(destinations);
   const hiddenGemCount = destinations.filter(
     (destination) => destination.hiddenGem,
   ).length;
@@ -78,7 +72,7 @@ export default async function DistrictPage({
     "@type": "TouristTrip",
     name: `${district.name} District Guide`,
     description: district.blurb,
-    url: new URL(`/districts/${district.slug}`, siteUrl).toString(),
+    url: new URL(`/districts/${district.slug}`, SITE_URL).toString(),
     touristType: "Destination discovery",
     provider: {
       "@type": "Organization",
@@ -93,7 +87,7 @@ export default async function DistrictPage({
       "@type": "TouristTrip",
       name: destination.name,
       description: destination.shortDescription,
-      url: new URL(`/districts/${district.slug}/${destination.slug}`, siteUrl).toString(),
+      url: new URL(`/districts/${district.slug}/${destination.slug}`, SITE_URL).toString(),
     })),
   };
   const jsonLdScript = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
@@ -119,12 +113,12 @@ export default async function DistrictPage({
               <h2 className="font-display mt-2 text-3xl text-ink sm:text-4xl">A living map of {district.name}</h2>
             </div>
             <span className="hidden text-xs uppercase tracking-[0.18em] text-muted sm:block">
-              {mappableDestinations.length} mapped places
+              {mapPlaces.length} mapped places
             </span>
           </div>
         <DistrictMapLoader
           district={district}
-          destinations={mappableDestinations}
+          places={mapPlaces}
         />
         </section>
 
@@ -164,7 +158,7 @@ export default async function DistrictPage({
         {[
           ["Destinations", destinations.length],
           ["Hidden gems", hiddenGemCount],
-          ["Mapped on map", mappableDestinations.length],
+          ["Mapped on map", mapPlaces.length],
         ].map(([label, count]) => (
           <div key={label} className="border-b border-line px-5 py-6 text-center last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
             <h2 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted">
@@ -198,7 +192,9 @@ export default async function DistrictPage({
                 className="group border-b border-line py-8 transition-colors hover:border-accent-ink"
               >
                 <div className="flex items-baseline justify-between gap-4">
-                  <span className="font-display text-xl text-accent-ink">0{index + 1}</span>
+                  <span className="font-display text-xl text-accent-ink">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
                   {destination.hiddenGem && (
                     <span className="text-[10px] uppercase tracking-[0.18em] text-accent-ink">Hidden gem</span>
                   )}

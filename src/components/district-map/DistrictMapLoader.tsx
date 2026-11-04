@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { Destination, District } from "@/lib/types";
+import type { District, MapPlace } from "@/lib/types";
 
 /*
  * Leaflet touches `window`, so the map must not render on the server. In the
@@ -19,18 +19,10 @@ const DistrictMap = dynamic(() => import("./DistrictMap"), {
 
 export function DistrictMapLoader({
   district,
-  destinations,
-  compact = false,
+  places,
 }: {
   district: District;
-  destinations: Destination[];
-  compact?: boolean;
+  places: MapPlace[];
 }) {
-  return (
-    <DistrictMap
-      district={district}
-      destinations={destinations}
-      compact={compact}
-    />
-  );
+  return <DistrictMap district={district} places={places} />;
 }

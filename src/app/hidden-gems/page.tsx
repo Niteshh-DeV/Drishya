@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { getDistrict } from "@/data/districts";
-import { getAllDestinations } from "@/lib/db/destinations";
+import { getHiddenGems } from "@/lib/db/destinations";
+import { destinationHref } from "@/lib/site";
 
 export const revalidate = 3600;
 
 export default async function HiddenGemsPage() {
-  const destinations = (await getAllDestinations()).filter(
-    (destination) => destination.hiddenGem,
-  );
+  const destinations = await getHiddenGems();
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-16 pt-[calc(var(--header-h)+2rem)]">
@@ -43,7 +42,7 @@ export default async function HiddenGemsPage() {
                 </p>
               )}
               <Link
-                href={`/districts/${destination.districtId}/${destination.slug}`}
+                href={destinationHref(destination)}
                 className="mt-4 inline-flex text-xs font-semibold uppercase tracking-[0.14em] text-accent-ink transition-colors hover:text-brass-light"
               >
                 Explore place →

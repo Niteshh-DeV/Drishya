@@ -74,8 +74,22 @@ export interface Destination {
   verify?: string[];
 }
 
-/** Category of a point-of-interest shown on the district (Leaflet) map. */
-export type PoiCategory = "guide" | "stay" | "hidden-gem";
+/**
+ * The slice of a destination that map markers and hover cards need. Maps on
+ * the home, /map and district pages receive this instead of the full
+ * `Destination`, keeping long descriptions and galleries out of their payload.
+ */
+export interface MapPlace {
+  id: string;
+  slug: string;
+  districtId: string;
+  name: string;
+  shortDescription: string;
+  position: [number, number];
+  hiddenGem: boolean;
+  /** Original Cloudinary URL of the cover photo, if one is uploaded. */
+  coverUrl?: string;
+}
 
 /** A district of Sudurpaschim Province. Single source of truth: `src/data/districts.ts`. */
 export interface District {
@@ -92,17 +106,6 @@ export interface District {
   tagline: string;
   /** One-to-two sentence intro. Starter content — verify/expand with the content team. */
   blurb: string;
-}
-
-/** A map marker (guide / stay / hidden gem). Sample data today; DB-backed later. */
-export interface Poi {
-  id: string;
-  districtId: string;
-  name: string;
-  category: PoiCategory;
-  /** [lat, lon] */
-  position: [number, number];
-  description: string;
 }
 
 /** Kind of landmark shown on the active district in the hero map — drives the glyph. */

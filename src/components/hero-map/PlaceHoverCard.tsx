@@ -2,17 +2,15 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import type { Destination } from "@/lib/types";
+import type { MapPlace } from "@/lib/types";
+import { cloudinaryUrl } from "@/lib/images";
+import { destinationHref } from "@/lib/site";
 
 interface PlaceHoverCardProps {
-  destination: Destination | null;
+  destination: MapPlace | null;
   position: { x: number; y: number } | null;
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
-}
-
-function imageFor(destination: Destination) {
-  return destination.media?.photos?.[0]?.secureUrl;
 }
 
 export function PlaceHoverCard({
@@ -22,7 +20,7 @@ export function PlaceHoverCard({
   onPointerLeave,
 }: PlaceHoverCardProps) {
   const reduced = useReducedMotion();
-  const image = destination ? imageFor(destination) : undefined;
+  const image = destination?.coverUrl;
   const viewportWidth =
     typeof window === "undefined" ? 1024 : window.innerWidth;
   const flipLeft = position ? position.x > viewportWidth - 330 : false;
@@ -70,8 +68,9 @@ export function PlaceHoverCard({
             {image ? (
               <motion.img
                 layoutId={destination.slug}
-                src={image}
+                src={cloudinaryUrl(image, 224)}
                 alt=""
+                decoding="async"
                 className="absolute -left-11 -top-6 h-28 w-28 object-cover shadow-lg"
               />
             ) : (
@@ -85,7 +84,7 @@ export function PlaceHoverCard({
                 {destination.name}
               </h2>
               <Link
-                href={`/districts/${destination.districtId}/${destination.slug}`}
+                href={destinationHref(destination)}
                 aria-label={`Explore ${destination.name}`}
                 className="group shrink-0 rounded-full p-1 text-place-ink transition-transform hover:translate-x-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-place-ink"
               >

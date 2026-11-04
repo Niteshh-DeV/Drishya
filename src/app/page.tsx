@@ -2,10 +2,12 @@ import Link from "next/link";
 import { HeroMap } from "@/components/hero-map/HeroMap";
 import { Reveal } from "@/components/site/Reveal";
 import { districts } from "@/data/districts";
-import { getAllMappableDestinations } from "@/lib/db/destinations";
+import { getMapPlaces } from "@/lib/db/destinations";
+
+export const revalidate = 3600;
 
 export default async function Home() {
-  const destinations = await getAllMappableDestinations();
+  const places = await getMapPlaces();
 
   return (
     <main id="top">
@@ -14,7 +16,7 @@ export default async function Home() {
        * the province overview through all nine districts. Its own section owns
        * the scroll distance, so nothing here needs a max-width.
        */}
-      <HeroMap destinations={destinations} />
+      <HeroMap places={places} />
 
       {/* Text/grid fallback — works without JS, helps SEO, and lists everything. */}
       <section

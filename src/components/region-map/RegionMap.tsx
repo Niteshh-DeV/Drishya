@@ -12,21 +12,12 @@ import {
 } from "react-leaflet";
 import { useEffect, useState } from "react";
 import type { FeatureCollection, Geometry } from "geojson";
-import type { Destination } from "@/lib/types";
+import type { MapPlace } from "@/lib/types";
+import { destinationHref } from "@/lib/site";
+import { OSM_TILES, teardropPin } from "@/components/map/leaflet";
 
-const pin = L.divIcon({
-  className: "region-destination-pin",
-  html: `<span style="display:block;width:18px;height:18px;border-radius:999px 999px 999px 0;background:var(--color-forest);border:3px solid var(--color-paper);transform:rotate(-45deg);box-shadow:0 4px 12px color-mix(in srgb,var(--color-forest-deep) 35%,transparent)"></span>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 18],
-});
-
-const gemPin = L.divIcon({
-  className: "region-destination-pin",
-  html: `<span style="display:block;width:18px;height:18px;border-radius:999px 999px 999px 0;background:var(--color-brass);border:3px solid var(--color-paper);transform:rotate(-45deg);box-shadow:0 4px 12px color-mix(in srgb,var(--color-forest-deep) 35%,transparent)"></span>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 18],
-});
+const pin = teardropPin("var(--color-forest)", "region-destination-pin");
+const gemPin = teardropPin("var(--color-brass)", "region-destination-pin");
 
 type DistrictBoundaries = FeatureCollection<
   Geometry,
@@ -35,10 +26,10 @@ type DistrictBoundaries = FeatureCollection<
 
 function FitRegion({
   boundaries,
-  destinations,
+  places,
 }: {
   boundaries: DistrictBoundaries | null;
-  destinations: Destination[];
+  places: MapPlace[];
 }) {
   const map = useMap();
 
@@ -46,19 +37,16 @@ function FitRegion({
     const bounds = boundaries
       ? L.geoJSON(boundaries as never).getBounds()
       : L.latLngBounds([]);
-    const positions = destinations
-      .map((destination) => destination.position)
-      .filter((position): position is [number, number] => position !== null);
-    positions.forEach((position) => bounds.extend(position));
+    places.forEach((place) => bounds.extend(place.position));
     if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, [boundaries, destinations, map]);
+  }, [boundaries, places, map]);
 
   return null;
 }
 
-export function RegionMap({ destinations }: { destinations: Destination[] }) {
+export function RegionMap({ places }: { places: MapPlace[] }) {
   const [boundaries, setBoundaries] = useState<DistrictBoundaries | null>(
     null,
   );
@@ -93,11 +81,8 @@ export function RegionMap({ destinations }: { destinations: Destination[] }) {
         zoomControl
         className="h-full w-full"
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <FitRegion boundaries={boundaries} destinations={destinations} />
+        <TileLayer {...OSM_TILES} />
+        <FitRegion boundaries={boundaries} places={places} />
         {boundaries && (
           <>
             <GeoJSON
@@ -132,26 +117,21 @@ export function RegionMap({ destinations }: { destinations: Destination[] }) {
             />
           </>
         )}
-        {destinations.map((destination) => {
-          if (!destination.position) return null;
-          return (
-            <Marker
-              key={destination.id}
-              position={destination.position}
-              icon={destination.hiddenGem ? gemPin : pin}
-            >
-              <Popup>
-                <strong>{destination.name}</strong>
-                <br />
-                <span>{destination.shortDescription}</span>
-                <br />
-                <a href={`/districts/${destination.districtId}/${destination.slug}`}>
-                  View place →
-                </a>
-              </Popup>
-            </Marker>
-          );
-        })}
+        {places.map((place) => (
+          <Marker
+            key={place.id}
+            position={place.position}
+            icon={place.hiddenGem ? gemPin : pin}
+          >
+            <Popup>
+              <strong>{place.name}</strong>
+              <br />
+              <span>{place.shortDescription}</span>
+              <br />
+              <a href={destinationHref(place)}>View place →</a>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );

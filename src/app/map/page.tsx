@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { RegionMapLoader } from "@/components/region-map/RegionMapLoader";
-import { getAllMappableDestinations } from "@/lib/db/destinations";
+import { getMapPlaces } from "@/lib/db/destinations";
 
 export const metadata: Metadata = {
   title: "Map",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function MapPage() {
-  const destinations = await getAllMappableDestinations();
+  const places = await getMapPlaces();
 
   return (
     <main className="min-h-screen bg-paper px-4 pb-20 pt-[calc(var(--header-h)+3rem)] text-ink sm:px-8">
@@ -28,9 +28,9 @@ export default async function MapPage() {
             full place page.
           </p>
         </header>
-        <RegionMapLoader destinations={destinations} />
+        <RegionMapLoader places={places} />
         <p className="mt-4 text-xs uppercase tracking-[0.18em] text-muted">
-          {destinations.length} mapped destinations
+          {places.length} mapped destinations
         </p>
       </div>
     </main>
