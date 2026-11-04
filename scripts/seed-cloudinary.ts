@@ -8,6 +8,9 @@ import cloudinary from "../src/lib/cloudinary";
 const imageRoot = path.join(process.cwd(), "public", "destinations");
 const supportedExtensions = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 const cloudinaryRoot = "drishya/destinations";
+// Without this flag, photos already recorded in the database are skipped, so
+// adding a district only uploads its new folders.
+const overwrite = process.argv.includes("--overwrite");
 
 function requireEnvironment(name: string): string {
   const value = process.env[name];
@@ -44,6 +47,11 @@ async function main() {
     const destinations = await prisma.destination.findMany({
       select: { id: true, districtId: true, slug: true },
     });
+    const existingImages = await prisma.destinationImage.findMany({
+      select: { publicId: true },
+    });
+    const uploadedPublicIds = new Set(existingImages.map((image) => image.publicId));
+
     const destinationByKey = new Map(
       destinations.map((destination) => [
         `${destination.districtId}/${destination.slug}`,
@@ -53,6 +61,7 @@ async function main() {
 
     const districtDirectories = await getDirectories(imageRoot);
     let uploadedCount = 0;
+    let skippedCount = 0;
 
     for (const districtDirectory of districtDirectories) {
       const districtId = districtDirectory.toLowerCase();
@@ -100,6 +109,11 @@ async function main() {
           }
           publicIds.add(publicId);
 
+          if (!overwrite && uploadedPublicIds.has(publicId)) {
+            skippedCount += 1;
+            continue;
+          }
+
           const uploaded = await cloudinary.uploader.upload(
             path.join(destinationPath, filename),
             {
@@ -135,7 +149,9 @@ async function main() {
       }
     }
 
-    console.log(`Cloudinary image seed complete: ${uploadedCount} image(s)`);
+    console.log(
+      `Cloudinary image seed complete: ${uploadedCount} uploaded, ${skippedCount} already uploaded and skipped`,
+    );
   } finally {
     await prisma.$disconnect();
   }

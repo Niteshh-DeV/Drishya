@@ -1,11 +1,13 @@
 /**
  * Seeds districts + destinations from the TypeScript data files.
  *
- *   npx prisma db seed
+ *   npx prisma db seed                    # add new rows only
+ *   npx prisma db seed -- --overwrite     # also rewrite existing rows
  *
- * Safe to re-run: everything is upserted. BUT once the content team starts
- * editing rows in the database, re-running this will overwrite their edits
- * with the .ts values — stop reseeding existing districts at that point.
+ * By default only rows missing from the database are created, so adding a
+ * new district file never touches places already there (or edits made to
+ * them in the database). `--overwrite` restores the old behaviour: every
+ * row is reset to its .ts values.
  */
 import "dotenv/config";
 import { PrismaNeon } from "@prisma/adapter-neon";
@@ -28,13 +30,23 @@ const adapter = new PrismaNeon({
 });
 const prisma = new PrismaClient({ adapter });
 
+const overwrite = process.argv.includes("--overwrite");
+
 const SEASONS = ["Spring", "Summer", "Monsoon", "Autumn", "Winter"];
 const BUDGETS = ["Low", "Low-Medium", "Medium", "High"];
 
 async function main() {
   const districtIds = new Set(districts.map((d) => d.id));
+  const [existingDistricts, existingDestinations] = await Promise.all([
+    prisma.district.findMany({ select: { id: true } }),
+    prisma.destination.findMany({ select: { id: true } }),
+  ]);
+  const districtInDb = new Set(existingDistricts.map((d) => d.id));
+  const destinationInDb = new Set(existingDestinations.map((d) => d.id));
 
+  let districtsWritten = 0;
   for (const d of districts) {
+    if (!overwrite && districtInDb.has(d.id)) continue;
     const data = {
       slug: d.slug,
       name: d.name,
@@ -50,10 +62,12 @@ async function main() {
       create: { id: d.id, ...data },
       update: data,
     });
+    districtsWritten += 1;
   }
-  console.log(`Districts upserted: ${districts.length}`);
+  console.log(`Districts ${overwrite ? "upserted" : "added"}: ${districtsWritten}`);
 
   const seen = new Set<string>();
+  let destinationsWritten = 0;
   for (const x of allDestinations) {
     // Fail loudly on data mistakes instead of writing bad rows.
     if (!districtIds.has(x.districtId)) throw new Error(`${x.id}: unknown district "${x.districtId}"`);
@@ -61,6 +75,7 @@ async function main() {
     seen.add(x.id);
     for (const s of x.bestSeasons) if (!SEASONS.includes(s)) throw new Error(`${x.id}: bad season "${s}"`);
     if (!BUDGETS.includes(x.budget)) throw new Error(`${x.id}: bad budget "${x.budget}"`);
+    if (!overwrite && destinationInDb.has(x.id)) continue;
 
     const data = {
       slug: x.slug,
@@ -100,8 +115,13 @@ async function main() {
       create: { id: x.id, ...data },
       update: data,
     });
+    destinationsWritten += 1;
+    console.log(`  ${overwrite ? "upserted" : "added"} ${x.id}`);
   }
-  console.log(`Destinations upserted: ${allDestinations.length}`);
+  console.log(
+    `Destinations ${overwrite ? "upserted" : "added"}: ${destinationsWritten}` +
+      (overwrite ? "" : ` (skipped ${allDestinations.length - destinationsWritten} already in the database)`),
+  );
 }
 
 main()
