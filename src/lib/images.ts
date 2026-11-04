@@ -15,7 +15,7 @@ export function cloudinaryUrl(url: string, width: number): string {
 
 /** Cover photo for a destination: the first image in sort order. */
 export function coverImageUrl(destination: {
-  media?: { photos?: { secureUrl: string }[] };
+  photos?: { secureUrl: string }[];
 }): string | undefined {
-  return destination.media?.photos?.[0]?.secureUrl;
+  return destination.photos?.[0]?.secureUrl;
 }

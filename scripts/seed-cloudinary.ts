@@ -132,14 +132,12 @@ async function main() {
               secureUrl: uploaded.secure_url,
               originalFilename: filename,
               sortOrder,
-              isCover: sortOrder === 0,
             },
             update: {
               destinationId: destination.id,
               secureUrl: uploaded.secure_url,
               originalFilename: filename,
               sortOrder,
-              isCover: sortOrder === 0,
             },
           });
 

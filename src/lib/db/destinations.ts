@@ -10,6 +10,7 @@ import { prisma } from "./prisma";
 import { coverImageUrl } from "@/lib/images";
 import type {
   BudgetLevel,
+  Category,
   DestinationImage,
   Destination,
   InterestTag,
@@ -17,13 +18,19 @@ import type {
   Season,
 } from "@/lib/types";
 import type {
-  Destination as Row,
   DestinationImage as ImageRow,
   Prisma,
 } from "@/generated/prisma/client";
 
-const withImages = {
+/** Every child table of a destination, each in its authored order. */
+const withDetails = {
   images: { orderBy: { sortOrder: "asc" } },
+  categories: { orderBy: { position: "asc" }, select: { categoryName: true } },
+  interestTags: { orderBy: { position: "asc" }, select: { tagName: true } },
+  bestSeasons: { orderBy: { position: "asc" }, select: { seasonName: true } },
+  alternateNames: { orderBy: { position: "asc" }, select: { name: true } },
+  sources: { orderBy: { position: "asc" }, select: { url: true, label: true } },
+  verifications: { orderBy: { field: "asc" }, select: { field: true } },
 } satisfies Prisma.DestinationInclude;
 
 /** Only the columns a map marker or hover card reads, plus the cover photo. */
@@ -48,12 +55,11 @@ function toImage(image: ImageRow): DestinationImage {
     secureUrl: image.secureUrl,
     originalFilename: image.originalFilename,
     sortOrder: image.sortOrder,
-    isCover: image.isCover,
     credit: image.credit ?? undefined,
   };
 }
 
-type DestinationRow = Row & { images: ImageRow[] };
+type DestinationRow = Prisma.DestinationGetPayload<{ include: typeof withDetails }>;
 
 function toDestination(r: DestinationRow): Destination {
   return {
@@ -62,12 +68,12 @@ function toDestination(r: DestinationRow): Destination {
     districtId: r.districtId,
     name: r.name,
     nameNepali: r.nameNepali ?? undefined,
-    category: r.category,
+    category: r.categories.map((c) => c.categoryName as Category),
     nearestTown: r.nearestTown ?? undefined,
     position: r.lat != null && r.lon != null ? [r.lat, r.lon] : null,
     elevationM: r.elevationM ?? undefined,
-    interestTags: r.interestTags as InterestTag[],
-    bestSeasons: r.bestSeasons as Season[],
+    interestTags: r.interestTags.map((t) => t.tagName as InterestTag),
+    bestSeasons: r.bestSeasons.map((s) => s.seasonName as Season),
     bestTimeNote: r.bestTimeNote ?? undefined,
     budget: r.budget as BudgetLevel,
     budgetNote: r.budgetNote ?? undefined,
@@ -81,18 +87,19 @@ function toDestination(r: DestinationRow): Destination {
     openingHours: r.openingHours ?? undefined,
     nearbyStaysFood: r.nearbyStaysFood ?? undefined,
     safetyNotes: r.safetyNotes ?? undefined,
-    media: r.mediaPhoto || r.images.length
-      ? {
-          photo: r.mediaPhoto ?? "",
-          photoUrl: r.mediaPhotoUrl ?? undefined,
-          credit: r.mediaCredit ?? "",
-          photos: r.images.map(toImage),
-        }
+    photos: r.images.length ? r.images.map(toImage) : undefined,
+    photoCredit: r.photoCredit ?? undefined,
+    sources: r.sources.length
+      ? r.sources.map((source) => ({
+          url: source.url ?? undefined,
+          label: source.label ?? undefined,
+        }))
       : undefined,
-    sources: r.sources.length ? r.sources : undefined,
-    alternateNames: r.alternateNames,
+    alternateNames: r.alternateNames.map((n) => n.name),
     culturalNote: r.culturalNote ?? undefined,
-    verify: r.verify.length ? r.verify : undefined,
+    verify: r.verifications.length
+      ? r.verifications.map((v) => v.field)
+      : undefined,
   };
 }
 
@@ -141,7 +148,7 @@ export async function getDestinationsForDistrict(
   const rows = await prisma.destination.findMany({
     where: { districtId },
     orderBy: { name: "asc" },
-    include: withImages,
+    include: withDetails,
   });
   return rows.map(toDestination);
 }
@@ -154,7 +161,7 @@ export const getDestination = cache(
   async (districtId: string, slug: string): Promise<Destination | null> => {
     const row = await prisma.destination.findUnique({
       where: { districtId_slug: { districtId, slug } },
-      include: withImages,
+      include: withDetails,
     });
     return row ? toDestination(row) : null;
   },
@@ -201,7 +208,7 @@ export async function getHiddenGems(): Promise<Destination[]> {
   const rows = await prisma.destination.findMany({
     where: { hiddenGem: true },
     orderBy: [{ districtId: "asc" }, { name: "asc" }],
-    include: withImages,
+    include: withDetails,
   });
   return rows.map(toDestination);
 }
@@ -213,7 +220,7 @@ export const getDestinationBySlug = cache(
       where: { slug },
       orderBy: [{ districtId: "asc" }, { name: "asc" }],
       take: 2,
-      include: withImages,
+      include: withDetails,
     });
     // Slugs are unique only within a district. The legacy /place/[slug] route
     // must not silently redirect an ambiguous slug to the wrong district.

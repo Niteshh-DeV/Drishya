@@ -43,10 +43,10 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "Cell phone signal is fully stable. Expect heavy crowd congestion and limited walking space during peak festival times like Dashain.",
 
-    media: {
-      photo: "Wikimedia Commons — Tripurasundari Temple",
-      credit: "Wikimedia Commons / Local Devotees",
-    },
+    sources: [
+      { label: "Wikimedia Commons — Tripurasundari Temple" },
+    ],
+    photoCredit: "Wikimedia Commons / Local Devotees",
 
     alternateNames: [
       "Ransaini Bhagwati",
@@ -64,7 +64,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Patal Bhumeshwar Cave",
     nameNepali: "पाताल भुवनेश्वर गुफा",
-    category: ["Cave", "Underground Wildlife & Forest Area"],
+    category: ["Cave"],
     nearestTown:
       "Surnaya Rural Municipality, roughly 30–40 minutes' drive from Patan hill town",
     position: [29.4752, 80.5694], // Surnaya Ward-2 cave system entryway
@@ -96,14 +96,11 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "High caution advised. Exploring deep into the cave requires high-powered headlamps, protective gear, and an experienced local guide. Internal oxygen levels can drop, and the limestone steps are permanently damp and slippery.",
 
-    media: {
-      photo: "The Annapurna Express feature on Baitadi",
-      photoUrl: "https://theannapurnaexpress.com/story/47506/",
-      credit: "Local Explorers / The Annapurna Express",
-    },
+    photoCredit: "Local Explorers / The Annapurna Express",
     sources: [
-      "https://hsj.sg/destinations/nepal/sudurpashchim/baitadi/poi/patal-bhumeshwar-cave",
-      "https://nepaltraveller.com/travel/cities/patan-the-heart-of-baitadi",
+      { url: "https://hsj.sg/destinations/nepal/sudurpashchim/baitadi/poi/patal-bhumeshwar-cave" },
+      { url: "https://nepaltraveller.com/travel/cities/patan-the-heart-of-baitadi" },
+      { url: "https://theannapurnaexpress.com/story/47506/", label: "The Annapurna Express feature on Baitadi" },
     ],
 
     alternateNames: [
@@ -121,7 +118,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Ningalashaini Bhagawati Temple",
     nameNepali: "निङ्गलाशैनी भगवती मन्दिर",
-    category: ["Temple", "Cultural Site"],
+    category: ["Temple", "Cultural Heritage"],
     nearestTown: "Dehimandau (Dasharathchand Municipality-2), right off the highway",
     position: [29.5447, 80.4852], // Dehimandau temple precinct
     elevationM: 2100,
@@ -150,12 +147,10 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "Cell connectivity is strong and stable. The courtyard becomes extremely packed with massive crowds during festival weeks, requiring strict vigilance.",
 
-    media: {
-      photo: "Dami Jatra / local festival logs (Doteli Wikipedia)",
-      photoUrl:
-        "https://dty.wikipedia.org/wiki/%E0%A4%A8%E0%A4%BF%E0%A4%99%E0%A5%8D%E0%A4%97%E0%A4%B2%E0%A4%BE%E0%A4%B6%E0%A5%88%E0%A4%A8%E0%A5%80_%E0%A4%AD%E0%A4%97%E0%A4%B5%E0%A4%A4%E0%A5%80_%E0%A4%AE%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A4%BF%E0%A4%B0",
-      credit: "Doteli Wikipedia Community Contributors",
-    },
+    sources: [
+      { url: "https://dty.wikipedia.org/wiki/%E0%A4%A8%E0%A4%BF%E0%A4%99%E0%A5%8D%E0%A4%97%E0%A4%B2%E0%A4%BE%E0%A4%B6%E0%A5%88%E0%A4%A8%E0%A5%80_%E0%A4%AD%E0%A4%97%E0%A4%B5%E0%A4%A4%E0%A5%80_%E0%A4%AE%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A4%BF%E0%A4%B0", label: "Dami Jatra / local festival logs (Doteli Wikipedia)" },
+    ],
+    photoCredit: "Doteli Wikipedia Community Contributors",
 
     alternateNames: ["Dehimandau Bhagawati", "Ningalasaini Mandir"],
     culturalNote:
@@ -168,7 +163,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Melauli Bhagwati Temple",
     nameNepali: "मेलाउली भगवती मन्दिर",
-    category: ["Temple", "Historical Monument"],
+    category: ["Temple", "Historical Site"],
     nearestTown:
       "Central Melauli Municipality, roughly 1.5 to 2 hours' drive from Patan or Gothalapani",
     position: [29.3875, 80.4691], // main temple complex centre
@@ -199,10 +194,10 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "Cell coverage is generally available but can experience temporary drops on remote ridge trails. Carrying cash is highly recommended as digital payment systems are absent locally.",
 
-    media: {
-      photo: "Melauli Local Gov Media Archives",
-      credit: "Melauli Community / Google Maps Contributors",
-    },
+    sources: [
+      { label: "Melauli Local Gov Media Archives" },
+    ],
+    photoCredit: "Melauli Community / Google Maps Contributors",
 
     alternateNames: [
       "Melauri Bhagwati",
@@ -219,7 +214,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Shree Udayadev Maharaj Mandir",
     nameNepali: "श्री उदयदेव महाराज मन्दिर",
-    category: ["Temple", "Cultural Site", "Religious Site"],
+    category: ["Temple", "Cultural Heritage", "Religious Site"],
     nearestTown:
       "Patan Municipality (Ward No. 6), about a 5–10 minute walk or short auto-rickshaw ride from the main Patan Bazaar",
     position: [29.4712, 80.5518], // Maitad/Sangaurkot hilltop area, Patan
@@ -254,12 +249,10 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "Cell signal (NTC and Ncell) is strong. Road travel along the winding hill highways requires caution; choose daytime travel when possible. Respect temple dress codes: wear modest attire and remove shoes and leather items before entering the inner sanctum.",
 
-    media: {
-      photo: "Wikimedia Commons — Udaydev Gallery",
-      photoUrl:
-        "https://commons.wikimedia.org/wiki/File:Udaydev_temple,_Patan,_Baitadi.jpg",
-      credit: "Wikimedia Commons / Local cultural contributors",
-    },
+    sources: [
+      { url: "https://commons.wikimedia.org/wiki/File:Udaydev_temple,_Patan,_Baitadi.jpg", label: "Wikimedia Commons — Udaydev Gallery" },
+    ],
+    photoCredit: "Wikimedia Commons / Local cultural contributors",
 
     alternateNames: [
       "Udayadev Mandir",
@@ -277,7 +270,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Historical Jagannath Mandir (Gadhi)",
     nameNepali: "जगन्नाथ मन्दिर",
-    category: ["Cultural Site", "Ancient Monument"],
+    category: ["Cultural Heritage", "Historical Site"],
     nearestTown: "Historic Gadhi fort ridge zone, near Dasharathchand",
     position: [29.5511, 80.3989], // Gadhi fort monument precinct
     elevationM: 1650,
@@ -304,13 +297,11 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "Cell connectivity is very strong across the entire ridge. Take caution when walking along the old stone steps and high fort edge borders.",
 
-    media: {
-      photo: "Wikimedia Commons — Jagannath Mandir Baitadi",
-      photoUrl:
-        "https://commons.wikimedia.org/wiki/File:Jagannath_Mandir_situated_at_Gadhi,_Baitadi,_Nepal.jpg",
-      credit: "Nirajan Pant / Wikimedia Commons",
-    },
-    sources: ["https://en.wikipedia.org/wiki/List_of_monuments_in_Baitadi,_Nepal"],
+    photoCredit: "Nirajan Pant / Wikimedia Commons",
+    sources: [
+      { url: "https://en.wikipedia.org/wiki/List_of_monuments_in_Baitadi,_Nepal" },
+      { url: "https://commons.wikimedia.org/wiki/File:Jagannath_Mandir_situated_at_Gadhi,_Baitadi,_Nepal.jpg", label: "Wikimedia Commons — Jagannath Mandir Baitadi" },
+    ],
 
     alternateNames: [
       "Jagannath Temple Gadhi",
@@ -327,7 +318,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Jhulaghat Border Town & Suspension Bridge",
     nameNepali: "झुलाघाट",
-    category: ["Market", "Historical Settlement", "Border Point"],
+    category: ["Town & Village", "Historical Site", "Landmark"],
     nearestTown: "About 30–40 minutes' downhill drive from Gothalapani Bazaar",
     position: [29.5732, 80.3801], // Mahakali border bridge crossing
     elevationM: 750,
@@ -358,14 +349,12 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "The Mahakali River current is very fast and highly dangerous; swimming or approaching unguided banks is strictly forbidden. Security check-posts require valid identification documents.",
 
-    media: {
+    photoCredit: "Cross-Border Documentation Group / Nepal Traveller",
+    sources: [
+      { url: "https://www.kupi.com/en/explore/nepal/baitadi" },
       // TODO: this URL is an article about Bajhang, not Jhulaghat — replace it.
-      photo: "Nepal Traveller Jhulaghat archive",
-      photoUrl:
-        "https://nepaltraveller.com/sidetrack/explore-bajhang-where-mountains-meet-myths",
-      credit: "Cross-Border Documentation Group / Nepal Traveller",
-    },
-    sources: ["https://www.kupi.com/en/explore/nepal/baitadi"],
+      { url: "https://nepaltraveller.com/sidetrack/explore-bajhang-where-mountains-meet-myths", label: "Nepal Traveller Jhulaghat archive" },
+    ],
 
     alternateNames: [
       "Jhulaghat Baitadi",
@@ -382,7 +371,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Dewalhat (Panchadeval) Archaeological Site",
     nameNepali: "देवलहाट पञ्चदेवल",
-    category: ["Cultural Site", "Ancient Monument", "Archaeology Area"],
+    category: ["Cultural Heritage", "Historical Site", "Archaeological Site"],
     nearestTown: "Patan Municipality, roughly 5–10 minutes from the Patan core bazaar",
     position: [29.4589, 80.5482], // stone temple complex near Patan
     elevationM: 1240,
@@ -410,11 +399,10 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "Cell connectivity is strong and stable. Walk carefully around the ancient stone bases as some structures are fragile.",
 
-    media: {
-      photo: "List of Monuments in Baitadi (Wikipedia)",
-      photoUrl: "https://en.wikipedia.org/wiki/List_of_monuments_in_Baitadi,_Nepal",
-      credit: "Department of Archaeology, Nepal / Wikimedia Commons",
-    },
+    sources: [
+      { url: "https://en.wikipedia.org/wiki/List_of_monuments_in_Baitadi,_Nepal", label: "List of Monuments in Baitadi (Wikipedia)" },
+    ],
+    photoCredit: "Department of Archaeology, Nepal / Wikimedia Commons",
 
     alternateNames: [
       "Dewalhatka Dewalharu",
@@ -432,7 +420,7 @@ export const baitadiDestinations: Destination[] = [
     districtId: "baitadi",
     name: "Shivnath Temple",
     nameNepali: "शिवनाथ मन्दिर",
-    category: ["Temple", "Historical & Cultural Site"],
+    category: ["Temple", "Historical Site", "Cultural Heritage"],
     nearestTown:
       "Shivnath Rural Municipality, on a high ridge overlooking the Mahakali River loop along the Indo-Nepal border",
     position: [29.3512, 80.3704], // approximate — high ridge sanctuary in Shivnath RM
@@ -464,14 +452,12 @@ export const baitadiDestinations: Destination[] = [
     safetyNotes:
       "Cellular signals can become weak or fluctuate along the immediate border valley drops. Carry local cash: digital payment facilities and ATMs are absent in the immediate vicinity.",
 
-    media: {
-      photo: "Shivnath Regional Media Archives",
-      credit: "Local Community Developers / Sudurpashchim Khabar",
-    },
+    photoCredit: "Local Community Developers / Sudurpashchim Khabar",
     sources: [
-      "https://en.wikipedia.org/wiki/Baitadi_District",
-      "https://nepaltraveller.com/travel/cities/patan-the-heart-of-baitadi",
-      "https://www.youtube.com/watch?v=9srm0P_XYJY",
+      { url: "https://en.wikipedia.org/wiki/Baitadi_District" },
+      { url: "https://nepaltraveller.com/travel/cities/patan-the-heart-of-baitadi" },
+      { url: "https://www.youtube.com/watch?v=9srm0P_XYJY" },
+      { label: "Shivnath Regional Media Archives" },
     ],
 
     alternateNames: [

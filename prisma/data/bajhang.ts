@@ -1,6 +1,7 @@
 
 import type {
   BudgetLevel,
+  Category,
   Destination,
   InterestTag,
   Season,
@@ -9,7 +10,7 @@ import type {
 type BajhangSourceDestination = {
   name: string;
   slug: string;
-  category: string;
+  category: Category[];
   nearestLandmark: string;
   latitude: number;
   longitude: number;
@@ -36,7 +37,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Khaptad National Park',
     slug: 'khaptad-national-park',
-    category: 'Forest/Wildlife Area & Cultural Site',
+    category: ["Forest & Wildlife", "Cultural Heritage"],
     nearestLandmark: '1-day trek from Tamil, Bajhang (or accessible via Silgadhi, Doti)',
     // Representative point inside the Khaptad National Park boundary.
     latitude: 29.378,
@@ -61,7 +62,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Surma Sarovar Lake',
     slug: 'surma-sarovar-lake',
-    category: 'Lake & Religious Site',
+    category: ["Lake & Wetland", "Religious Site"],
     nearestLandmark: '4 days of trekking north from Chainpur Bazaar',
     latitude: 29.7712,
     longitude: 81.0845,
@@ -85,7 +86,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Chainpur Bazaar',
     slug: 'chainpur-historic-bazaar',
-    category: 'Market & Cultural Site',
+    category: ["Town & Village", "Cultural Heritage"],
     nearestLandmark: 'Administrative headquarters of the district',
     latitude: 29.5539,
     longitude: 81.2078,
@@ -109,7 +110,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Saipal Base Camp (South Western Entry)',
     slug: 'saipal-base-camp-bajhang-route',
-    category: 'Mountain/Trekking Spot & Wildlife Area',
+    category: ["Mountain & Trek", "Forest & Wildlife"],
     nearestLandmark: '5–7 days trekking north from Talkot / Tamil Bazaar',
     latitude: 29.8824,
     longitude: 81.2981,
@@ -133,7 +134,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Banni Masta Temple',
     slug: 'banni-masta-temple',
-    category: 'Cultural & Religious Site',
+    category: ["Religious Site", "Cultural Heritage"],
     nearestLandmark: 'Banni Chaur, Ward No. 3 of Chhabispathibhera Rural Municipality',
     latitude: 29.4891,
     longitude: 81.2543,
@@ -157,7 +158,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Jaya Prithvi Nagar Palace Ruins',
     slug: 'jaya-prithvi-nagar-palace-ruins',
-    category: 'Cultural Site & History',
+    category: ["Historical Site", "Cultural Heritage"],
     nearestLandmark: '15 minutes by vehicle from Chainpur Bazaar, located in Bhopur',
     latitude: 29.5492,
     longitude: 81.2131,
@@ -181,7 +182,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Baril Waterfall',
     slug: 'baril-waterfall',
-    category: 'Waterfall',
+    category: ["Waterfall"],
     nearestLandmark: 'Roughly 45 minutes to 1 hour drive from Chainpur',
     latitude: 29.563,
     longitude: 81.1895,
@@ -205,7 +206,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Chamla Waterfall',
     slug: 'chamla-waterfall',
-    category: 'Waterfall',
+    category: ["Waterfall"],
     nearestLandmark: 'Gadaraya, roughly 1.5 to 2 hours from Chainpur bazaar',
     latitude: 29.4722,
     longitude: 81.1694,
@@ -229,7 +230,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Surma Devi Temple',
     slug: 'surma-devi-temple-chainpur',
-    category: 'Temple & Cultural Site',
+    category: ["Temple", "Cultural Heritage"],
     nearestLandmark: 'Inside the urban center of Chainpur Bazaar',
     latitude: 29.5524,
     longitude: 81.2065,
@@ -253,7 +254,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Thalara Durbar Grounds',
     slug: 'thalara-durbar-grounds',
-    category: 'Cultural Site & History',
+    category: ["Historical Site", "Cultural Heritage"],
     nearestLandmark: 'Thalara Rural Municipality, roughly 1.5 hours drive southwest from Chainpur',
     latitude: 29.4312,
     longitude: 81.1145,
@@ -277,7 +278,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Thanpatan',
     slug: 'thanpatan',
-    category: 'Viewpoint / High-Altitude Alpine Grassland Plateau (Patan)',
+    category: ["Viewpoint", "Meadow"],
     nearestLandmark: '~1 day trek from Bijgada / Girau Village (Bungal Municipality); via Bagthala transit point',
     latitude: 29.6833,
     longitude: 80.8722,
@@ -302,7 +303,7 @@ const bajhangSourceDestinations: BajhangSourceDestination[] = [
   {
     name: 'Urai Bhanjyang Pass',
     slug: 'urai-bhanjyang-pass',
-    category: 'Mountain Pass / Trekking Route',
+    category: ["Mountain & Trek"],
     nearestLandmark: 'Dhuli village (4–5 days trek north from Chainpur bazaar)',
     // Urai La / Urai Bhanjyang, from OpenStreetMap's mountain-pass feature.
     latitude: 30.01245,
@@ -359,7 +360,7 @@ export const bajhangDestinations: Destination[] = bajhangSourceDestinations.map(
     slug: destination.slug,
     districtId: destination.districtSlug,
     name: destination.name,
-    category: [destination.category],
+    category: destination.category,
     nearestTown: destination.nearestLandmark,
     position: [destination.latitude, destination.longitude],
     interestTags: destination.interestTags.map(

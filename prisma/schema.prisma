@@ -23,32 +23,30 @@ model District {
   destinations Destination[]
 }
 
-/// Mirrors the `Destination` type in src/lib/types.ts.
-/// Enum-like fields (interestTags, bestSeasons, budget) are stored as plain
-/// strings and validated by the TypeScript unions + the seed script. Prisma
-/// enums can't hold values like "Low-Medium".
+/// Mirrors the `Destination` type in src/lib/types.ts. List-valued fields
+/// (categories, tags, seasons, names, sources, verify flags) live in child
+/// tables, and the fixed vocabularies are lookup tables, so a misspelled tag
+/// or season is rejected by a foreign key instead of silently stored.
 model Destination {
   id         String   @id // "baitadi-tripura-sundari"
   slug       String
   districtId String
   district   District @relation(fields: [districtId], references: [id])
 
-  name      String
-  nameNepali String?
-  category  String[]
+  name        String
+  nameNepali  String?
   nearestTown String?
 
   // null where the source data had no verified coordinates.
-  lat       Float?
-  lon       Float?
+  lat        Float?
+  lon        Float?
   elevationM Int?
 
-  interestTags   String[]
-  bestSeasons    String[]
-  bestTimeNote   String?
-  budget         String
-  budgetNote     String?
-  hiddenGem      Boolean
+  bestTimeNote    String?
+  budget          String
+  budgetLevel     BudgetLevel @relation(fields: [budget], references: [name], onUpdate: Cascade)
+  budgetNote      String?
+  hiddenGem       Boolean
   hiddenGemReason String?
 
   shortDescription String
@@ -61,18 +59,17 @@ model Destination {
   nearbyStaysFood String?
   safetyNotes     String?
 
-  mediaPhoto    String?
-  mediaPhotoUrl String?
-  mediaCredit   String?
+  /// Credit line shown under the cover photo, for the gallery as a whole.
+  photoCredit  String?
+  culturalNote String?
 
-  sources        String[]
-  alternateNames String[]
-  culturalNote   String?
-
-  /// Fields still unconfirmed, e.g. ["position", "entryFee"].
-  verify String[]
-
-  images DestinationImage[]
+  categories     DestinationCategory[]
+  interestTags   DestinationInterest[]
+  bestSeasons    DestinationSeason[]
+  alternateNames DestinationAlternateName[]
+  sources        DestinationSource[]
+  verifications  DestinationVerification[]
+  images         DestinationImage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -81,6 +78,7 @@ model Destination {
   @@index([districtId])
 }
 
+/// Cover photo = lowest `sortOrder`; it is not stored separately.
 model DestinationImage {
   id               String      @id @default(cuid())
   destinationId    String
@@ -89,10 +87,105 @@ model DestinationImage {
   secureUrl        String
   originalFilename String
   sortOrder        Int         @default(0)
-  isCover          Boolean     @default(false)
   credit           String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
   @@index([destinationId, sortOrder])
+}
+
+// ── Lookup tables ────────────────────────────────────────────────────────
+// Each row's `name` is identical to the matching string union in
+// src/lib/types.ts. Seeded by the migration and kept in sync by prisma/seed.ts.
+
+model Category {
+  name         String                @id // "Lake & Wetland"
+  destinations DestinationCategory[]
+}
+
+model InterestTag {
+  name         String                @id // "Trekking"
+  destinations DestinationInterest[]
+}
+
+model Season {
+  name         String              @id // "Monsoon"
+  /// Calendar order, Spring = 1 … Winter = 5.
+  sortOrder    Int                 @unique
+  destinations DestinationSeason[]
+}
+
+model BudgetLevel {
+  name         String        @id // "Low-Medium"
+  /// Cheapest = 1, for range comparisons in the recommendation engine.
+  rank         Int           @unique
+  destinations Destination[]
+}
+
+// ── Destination ↔ lookup (many-to-many) ──────────────────────────────────
+// `position` keeps the order the content was written in.
+
+model DestinationCategory {
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  categoryName  String
+  category      Category    @relation(fields: [categoryName], references: [name], onUpdate: Cascade)
+  position      Int
+
+  @@id([destinationId, categoryName])
+  @@index([categoryName])
+}
+
+model DestinationInterest {
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  tagName       String
+  tag           InterestTag @relation(fields: [tagName], references: [name], onUpdate: Cascade)
+  position      Int
+
+  @@id([destinationId, tagName])
+  @@index([tagName])
+}
+
+model DestinationSeason {
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  seasonName    String
+  season        Season      @relation(fields: [seasonName], references: [name], onUpdate: Cascade)
+  position      Int
+
+  @@id([destinationId, seasonName])
+  @@index([seasonName])
+}
+
+// ── Destination → many (one-to-many) ─────────────────────────────────────
+
+model DestinationAlternateName {
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  name          String
+  position      Int
+
+  @@id([destinationId, name])
+}
+
+/// A reference cited by the source doc: a link, a named archive, or both.
+model DestinationSource {
+  id            String      @id @default(cuid())
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  url           String?
+  label         String?
+  position      Int
+
+  @@index([destinationId, position])
+}
+
+/// A `Destination` field the source flagged as unconfirmed, e.g. "entryFee".
+model DestinationVerification {
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  field         String
+
+  @@id([destinationId, field])
 }

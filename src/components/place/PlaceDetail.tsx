@@ -54,9 +54,7 @@ export function PlaceDetail({
   nextDistrict,
 }: PlaceDetailProps) {
   const image = coverImageUrl(destination);
-  const gallery = destination.media?.photos?.filter(
-    (photo) => photo.secureUrl !== image,
-  ) ?? [];
+  const gallery = destination.photos?.slice(1) ?? [];
   const paragraphs = destination.longDescription
     ? destination.longDescription.split(/\n+/).filter(Boolean)
     : [destination.shortDescription];
@@ -176,9 +174,9 @@ export function PlaceDetail({
               src={cloudinaryUrl(image, 2000)}
               alt={destination.name}
             />
-            {destination.media?.credit && (
+            {destination.photoCredit && (
               <p className="mt-3 text-right text-[10px] uppercase tracking-[0.16em] text-muted">
-                {destination.media.credit}
+                {destination.photoCredit}
               </p>
             )}
           </RevealSection>
@@ -278,16 +276,20 @@ export function PlaceDetail({
                   Sources
                 </h2>
                 <ul className="mt-3 space-y-2 text-sm text-ink">
-                  {destination.sources.map((source) => (
-                    <li key={source}>
-                      <a
-                        href={source}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="break-all hover:text-accent-ink"
-                      >
-                        {source}
-                      </a>
+                  {destination.sources.map((source, index) => (
+                    <li key={source.url ?? source.label ?? index}>
+                      {source.url ? (
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="break-all hover:text-accent-ink"
+                        >
+                          {source.label ?? source.url}
+                        </a>
+                      ) : (
+                        source.label
+                      )}
                     </li>
                   ))}
                 </ul>
