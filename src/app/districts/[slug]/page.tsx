@@ -96,12 +96,13 @@ export default async function DistrictPage({
       url: new URL(`/districts/${district.slug}/${destination.slug}`, siteUrl).toString(),
     })),
   };
+  const jsonLdScript = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
 
   return (
     <main className="min-h-screen bg-paper text-ink">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript }}
       />
       <div className="mx-auto max-w-360 px-5 pb-24 pt-[calc(var(--header-h)+3rem)] sm:px-10 lg:px-16">
         <Link

@@ -66,7 +66,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(()=>{const t=localStorage.getItem("drishya-theme");if(t==="dark")document.documentElement.dataset.theme="dark"})()`,
+            __html: `(()=>{try{const t=localStorage.getItem("drishya-theme");if(t==="dark")document.documentElement.dataset.theme="dark"}catch{}})()`,
           }}
         />
       </head>

@@ -305,7 +305,10 @@ export default function DistrictMap({
   useEffect(() => {
     let cancelled = false;
     fetch("/data/sudurpaschim-districts.simplified.geojson")
-      .then((r) => r.json())
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to load district boundaries");
+        return response.json() as Promise<DistrictFeatureCollection>;
+      })
       .then((fc: DistrictFeatureCollection) => {
         if (cancelled) return;
         setFeature(fc.features.find((f) => f.properties.id === district.id) ?? null);

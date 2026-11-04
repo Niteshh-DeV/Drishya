@@ -123,12 +123,15 @@ export async function getAllMappableDestinations(): Promise<Destination[]> {
 export async function getDestinationBySlug(
   slug: string,
 ): Promise<Destination | null> {
-  const row = await prisma.destination.findFirst({
+  const rows = await prisma.destination.findMany({
     where: { slug },
     orderBy: [{ districtId: "asc" }, { name: "asc" }],
+    take: 2,
     include: { images: { orderBy: { sortOrder: "asc" } } },
   });
-  return row ? toDestination(row) : null;
+  // Slugs are unique only within a district. The legacy /place/[slug] route
+  // must not silently redirect an ambiguous slug to the wrong district.
+  return rows.length === 1 ? toDestination(rows[0]) : null;
 }
 
 export async function getAllPlaceParams(): Promise<{ slug: string }[]> {
