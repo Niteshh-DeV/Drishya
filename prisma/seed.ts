@@ -20,16 +20,20 @@ import type {
   Season,
 } from "../src/lib/types";
 import { districts } from "../src/data/districts";
+import { achhamDestinations } from "./data/achham";
 import { baitadiDestinations } from "./data/baitadi";
 import { bajuraDestinations } from "./data/bajura";
 import { bajhangDestinations } from "./data/bajhang";
 import { dadeldhuraDestinations } from "./data/dadeldhura";
+import { kailaliDestinations } from "./data/kailali";
 
 const allDestinations = [
+  ...achhamDestinations,
   ...baitadiDestinations,
   ...bajuraDestinations,
   ...bajhangDestinations,
   ...dadeldhuraDestinations,
+  ...kailaliDestinations,
 ];
 
 const adapter = new PrismaNeon({
