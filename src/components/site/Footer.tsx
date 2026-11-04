@@ -35,7 +35,7 @@ export function Footer() {
             stays, and local routes across Sudurpaschim.
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.16em] text-stone/65">
-            Team credit: FWU × Drishya
+            Team credit: Nitesh Joshi · Bipana Dhami · Pooja Bhatt · Gomati Badu
           </p>
         </div>
 
