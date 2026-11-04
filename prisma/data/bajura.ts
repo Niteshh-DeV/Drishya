@@ -13,7 +13,7 @@ export const bajuraDestinations: Destination[] = [
     districtId: "bajura",
     name: "Badimalika Temple",
     nameNepali: "बडिमालिका मन्दिर",
-    category: ["Temple", "High-altitude alpine pasture"],
+    category: ["Temple", "Meadow"],
     nearestTown: "2–3 day trek from Martadi (district headquarters of Bajura)",
     // NOTE: source coordinates are identical to Triveni Patan's — verify.
     position: [29.3469, 81.4775],
@@ -46,12 +46,10 @@ export const bajuraDestinations: Destination[] = [
     safetyNotes:
       "Cell signal is limited to specific high ridges (recently expanded via Ncell/NTC towers near the top). High risk of Acute Mountain Sickness (AMS); warm clothing and acclimatization are mandatory.",
 
-    media: {
-      photo: "High-altitude pastures & temple complex (Wikimedia Commons)",
-      photoUrl:
-        "https://commons.wikimedia.org/wiki/File:Badimalika_Temple_4186M,_Bajura,_Nepal.jpg",
-      credit: "Wikimedia Commons / Umesh Paudel",
-    },
+    sources: [
+      { url: "https://commons.wikimedia.org/wiki/File:Badimalika_Temple_4186M,_Bajura,_Nepal.jpg", label: "High-altitude pastures & temple complex (Wikimedia Commons)" },
+    ],
+    photoCredit: "Wikimedia Commons / Umesh Paudel",
 
     alternateNames: ["Badi Mahka Bhagawati", "Malika Mai"],
     culturalNote:
@@ -64,7 +62,7 @@ export const bajuraDestinations: Destination[] = [
     districtId: "bajura",
     name: "Khaptad Chhededaha Lake",
     nameNepali: "छेडेदह ताल",
-    category: ["Lake"],
+    category: ["Lake & Wetland"],
     nearestTown:
       "Near the roadside, roughly 5–7 km from the Bajura–Bajhang district border",
     // Approximate — derived from a local centre point in the source.
@@ -96,12 +94,10 @@ export const bajuraDestinations: Destination[] = [
     safetyNotes:
       "The area is prone to slope instability; watch for landslide signs during heavy downpours. The water is deep, so swimming is discouraged unless properly equipped.",
 
-    media: {
-      photo: "Chhededaha landslide and conservation profile (Kathmandu Post)",
-      photoUrl:
-        "https://kathmandupost.com/sudurpaschim-province/2023/12/28/massive-landslide-threatens-bajura-s-chhededaha-lake-and-surroundings",
-      credit: "The Kathmandu Post / Arjun Thapa",
-    },
+    sources: [
+      { url: "https://kathmandupost.com/sudurpaschim-province/2023/12/28/massive-landslide-threatens-bajura-s-chhededaha-lake-and-surroundings", label: "Chhededaha landslide and conservation profile (Kathmandu Post)" },
+    ],
+    photoCredit: "The Kathmandu Post / Arjun Thapa",
 
     alternateNames: ["Chhededaha Tal", "Aatichaur Lake"],
     culturalNote:
@@ -114,7 +110,7 @@ export const bajuraDestinations: Destination[] = [
     districtId: "bajura",
     name: "Kalajagra",
     nameNepali: "कालाजग्रा",
-    category: ["Alpine Viewpoint", "Peak", "Cultural Site"],
+    category: ["Viewpoint", "Mountain & Trek", "Cultural Heritage"],
     nearestTown: "2-hour off-road ride plus 4-hour trek from Martadi Bazaar (district HQ)",
     position: [29.4752, 81.3324],
     elevationM: 3100,
@@ -141,11 +137,10 @@ export const bajuraDestinations: Destination[] = [
     safetyNotes:
       "The weather at 3,100m changes rapidly with sudden temperature drops. Trails are narrow along ridge edges. Cellular signals (NTC/Ncell) are completely dead or highly erratic near the peak.",
 
-    media: {
-      photo: "Wild Bajura community page",
-      photoUrl: "https://www.facebook.com/wildbajura/",
-      credit: "Himalaya Bhatt / Wild Bajura",
-    },
+    sources: [
+      { url: "https://www.facebook.com/wildbajura/", label: "Wild Bajura community page" },
+    ],
+    photoCredit: "Himalaya Bhatt / Wild Bajura",
 
     alternateNames: ["Kala Jagra", "Kalajagra Bhagwati", "Kalajagra Peak"],
     culturalNote:
@@ -158,7 +153,7 @@ export const bajuraDestinations: Destination[] = [
     districtId: "bajura",
     name: "Budhinanda Tal & Temple",
     nameNepali: "बुढीनन्दा",
-    category: ["Sacred Alpine Lake", "Mountain Shrine", "Cultural Site"],
+    category: ["Lake & Wetland", "Religious Site", "Temple", "Cultural Heritage"],
     nearestTown:
       "Trail starts from Kolti Bazaar (gateway hub for Budhinanda Municipality); a rigorous 3–4 day high-altitude trek northward",
     position: [29.6478, 81.5547],
@@ -197,11 +192,10 @@ export const bajuraDestinations: Destination[] = [
     safetyNotes:
       "Acute Mountain Sickness (AMS) is a severe risk due to the rapid gain in elevation. The terrain contains narrow, exposed ridge edges and slick boulder trails. Hiring an experienced local guide from Nuri Gaon is highly recommended. Cellular connectivity (NTC/Ncell) is completely non-existent.",
 
-    media: {
-      photo: "Wild Bajura community repository",
-      photoUrl: "https://www.facebook.com/wildbajura/",
-      credit: "Himalaya Bhatt / Wild Bajura",
-    },
+    sources: [
+      { url: "https://www.facebook.com/wildbajura/", label: "Wild Bajura community repository" },
+    ],
+    photoCredit: "Himalaya Bhatt / Wild Bajura",
 
     alternateNames: [
       "Budhinandha Tal",
@@ -253,11 +247,10 @@ export const bajuraDestinations: Destination[] = [
     safetyNotes:
       "The massive water pressure creates a continuous wet spray zone. The stone steps and iron safety railings near the plunge pool can get very slick. Avoid climbing the wet boundary boulders during heavy monsoon discharges. Cell signals (NTC and Ncell) are functional but can fluctuate down in the valley corridor.",
 
-    media: {
-      photo: "Wild Bajura community archives",
-      photoUrl: "https://www.facebook.com/wildbajura/",
-      credit: "Nabin Raj Upadhaya / People Places Nepal",
-    },
+    sources: [
+      { url: "https://www.facebook.com/wildbajura/", label: "Wild Bajura community archives" },
+    ],
+    photoCredit: "Nabin Raj Upadhaya / People Places Nepal",
 
     alternateNames: [
       "Bire Chhado",
@@ -275,7 +268,7 @@ export const bajuraDestinations: Destination[] = [
     districtId: "bajura",
     name: "Triveni Patan",
     nameNepali: "त्रिवेणी पाटन",
-    category: ["Alpine Meadow / Grassland", "Forest/Wildlife Area", "Cultural Site"],
+    category: ["Meadow", "Forest & Wildlife", "Cultural Heritage"],
     nearestTown:
       "Just below Badimalika Temple. Closest vehicle-accessible settlements are Jadanga or Budha Krodh, then a 2-day uphill trek",
     // NOTE: source coordinates are identical to Badimalika Temple's — verify.
@@ -314,11 +307,10 @@ export const bajuraDestinations: Destination[] = [
     safetyNotes:
       "Acute Mountain Sickness (AMS) is a significant hazard; adequate acclimatization is mandatory. Bring high-quality rain gear, water filters, and cold-weather clothing. Cellular connectivity (NTC/Ncell) is highly erratic or entirely unavailable inside the lower meadow folds.",
 
-    media: {
-      photo: "Wild Bajura community repository",
-      photoUrl: "https://www.facebook.com/wildbajura/",
-      credit: "Himalaya Bhatt / Wild Bajura",
-    },
+    sources: [
+      { url: "https://www.facebook.com/wildbajura/", label: "Wild Bajura community repository" },
+    ],
+    photoCredit: "Himalaya Bhatt / Wild Bajura",
 
     alternateNames: [
       "Tribeni Patan",

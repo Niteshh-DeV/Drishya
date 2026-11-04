@@ -14,7 +14,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "ugratara-temple",
     districtId: "dadeldhura",
     name: "Ugratara Temple",
-    category: ["Temple", "Religious & Cultural Site"],
+    category: ["Temple", "Religious Site", "Cultural Heritage"],
     nearestTown: "Dadeldhura/Amargadhi Bazaar; about 5 km from Dadeldhura town",
     // From OpenStreetMap/Mapcarta — confirm the entrance pin in Google Maps.
     position: [29.33462, 80.6036],
@@ -51,7 +51,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "amargadhi-fort",
     districtId: "dadeldhura",
     name: "Amargadhi Fort",
-    category: ["Historical Fort", "Heritage Site"],
+    category: ["Historical Site"],
     nearestTown: "Dadeldhura/Amargadhi Bazaar",
     position: [29.29952, 80.58583],
     elevationM: 1700,
@@ -120,7 +120,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "ali-tal",
     districtId: "dadeldhura",
     name: "Ali Tal",
-    category: ["Lake", "Nature"],
+    category: ["Lake & Wetland"],
     nearestTown: "Alital Rural Municipality",
     position: [29.14075, 80.46773],
     elevationM: 789,
@@ -155,7 +155,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "parshuram-dham",
     districtId: "dadeldhura",
     name: "Parshuram Dham",
-    category: ["Religious Site", "Cultural Site", "Pilgrimage Site"],
+    category: ["Religious Site", "Cultural Heritage"],
     nearestTown:
       "Jogbuda / Parshuram Municipality, Ward 5 (Parigaun/Jogbuda area), on the Mahakali River near the Nepal–India border",
     position: null,
@@ -189,7 +189,7 @@ export const dadeldhuraDestinations: Destination[] = [
     districtId: "dadeldhura",
     name: "Shayal Waterfall",
     nameNepali: "सायल झरना",
-    category: ["Waterfall", "Nature"],
+    category: ["Waterfall"],
     nearestTown: "Rupal, Bhageshwar Rural Municipality-1 (Sayal/Rupal area)",
     position: null,
 
@@ -222,7 +222,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "kasyadanda",
     districtId: "dadeldhura",
     name: "Kasyadanda",
-    category: ["Viewpoint", "Hill", "Sunrise/Sunset Point"],
+    category: ["Viewpoint", "Mountain & Trek"],
     nearestTown: "Amargadhi Municipality-7; reached from the Surkhal area",
     position: null,
 
@@ -285,7 +285,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "raniban",
     districtId: "dadeldhura",
     name: "Raniban",
-    category: ["Forest", "Nature"],
+    category: ["Forest & Wildlife"],
     position: null,
 
     interestTags: ["Nature", "Wildlife", "Trekking", "Relaxation"],
@@ -318,7 +318,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "ashigram-temple",
     districtId: "dadeldhura",
     name: "Ashigram Temple",
-    category: ["Hindu Temple", "Religious & Cultural Site"],
+    category: ["Temple", "Religious Site", "Cultural Heritage"],
     nearestTown: "Dadeldhura/Amargadhi area",
     // The Ashigram *locality* is at 29.22998, 80.65376, but that is not necessarily
     // the temple — the source says not to enter a temple coordinate yet.
@@ -354,7 +354,7 @@ export const dadeldhuraDestinations: Destination[] = [
     slug: "ghatal-temple",
     districtId: "dadeldhura",
     name: "Ghatal Temple",
-    category: ["Hindu Temple", "Religious & Cultural Site"],
+    category: ["Temple", "Religious Site", "Cultural Heritage"],
     nearestTown: "Amargadhi / Dadeldhura Bazaar",
     // Mapped specifically for Ghatal Than, not just the surrounding locality.
     position: [29.27845, 80.55988],

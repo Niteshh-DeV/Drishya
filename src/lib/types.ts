@@ -15,13 +15,38 @@ export type Season = "Spring" | "Summer" | "Monsoon" | "Autumn" | "Winter";
 
 export type BudgetLevel = "Low" | "Low-Medium" | "Medium" | "High";
 
+/** Curated place categories; a destination can have several. */
+export type Category =
+  | "Temple"
+  | "Religious Site"
+  | "Historical Site"
+  | "Archaeological Site"
+  | "Cultural Heritage"
+  | "Lake & Wetland"
+  | "River"
+  | "Waterfall"
+  | "Cave"
+  | "Viewpoint"
+  | "Mountain & Trek"
+  | "Meadow"
+  | "Forest & Wildlife"
+  | "Park & Recreation"
+  | "Town & Village"
+  | "Landmark";
+
+/** A reference cited by the source doc: a link, a named archive, or both. */
+export interface SourceRef {
+  url?: string;
+  label?: string;
+}
+
 export interface DestinationImage {
   id: string;
   publicId: string;
   secureUrl: string;
   originalFilename: string;
+  /** Lowest sortOrder is the cover photo. */
   sortOrder: number;
-  isCover: boolean;
   credit?: string;
 }
 
@@ -32,7 +57,7 @@ export interface Destination {
   districtId: string;
   name: string;
   nameNepali?: string;
-  category: string[];
+  category: Category[];
   /** Nearest town / landmark, in plain prose. */
   nearestTown?: string;
   /** [lat, lon]. `null` where the source data is incomplete. */
@@ -58,24 +83,35 @@ export interface Destination {
   nearbyStaysFood?: string;
   safetyNotes?: string;
 
-  media?: {
-    photo: string;
-    photoUrl?: string;
-    credit: string;
-    /** Cloudinary-backed gallery; omitted in seed sources until images are uploaded. */
-    photos?: DestinationImage[];
-  };
+  /** Cloudinary gallery in display order; filled from the database, not seed files. */
+  photos?: DestinationImage[];
+  /** Credit line for the gallery as a whole, shown under the cover photo. */
+  photoCredit?: string;
 
-  /** Reference pages cited in the source doc. */
-  sources?: string[];
+  /** References cited in the source doc. */
+  sources?: SourceRef[];
 
   alternateNames: string[];
   culturalNote?: string;
   verify?: string[];
 }
 
-/** Category of a point-of-interest shown on the district (Leaflet) map. */
-export type PoiCategory = "guide" | "stay" | "hidden-gem";
+/**
+ * The slice of a destination that map markers and hover cards need. Maps on
+ * the home, /map and district pages receive this instead of the full
+ * `Destination`, keeping long descriptions and galleries out of their payload.
+ */
+export interface MapPlace {
+  id: string;
+  slug: string;
+  districtId: string;
+  name: string;
+  shortDescription: string;
+  position: [number, number];
+  hiddenGem: boolean;
+  /** Original Cloudinary URL of the cover photo, if one is uploaded. */
+  coverUrl?: string;
+}
 
 /** A district of Sudurpaschim Province. Single source of truth: `src/data/districts.ts`. */
 export interface District {
@@ -92,17 +128,6 @@ export interface District {
   tagline: string;
   /** One-to-two sentence intro. Starter content — verify/expand with the content team. */
   blurb: string;
-}
-
-/** A map marker (guide / stay / hidden gem). Sample data today; DB-backed later. */
-export interface Poi {
-  id: string;
-  districtId: string;
-  name: string;
-  category: PoiCategory;
-  /** [lat, lon] */
-  position: [number, number];
-  description: string;
 }
 
 /** Kind of landmark shown on the active district in the hero map — drives the glyph. */

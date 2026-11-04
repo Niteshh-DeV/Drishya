@@ -103,7 +103,8 @@ The `Destination` type is in `src/lib/types.ts`.
 - Never fabricate history, culture, fees, opening hours, or phone numbers. If something is unknown, leave it out.
 - `tagline`/`blurb` in `districts.ts` and `landmarks.ts` are starter content, not authoritative.
 - Long descriptions and cultural notes double as the future RAG corpus — keep them as clear prose, not fragments.
-- Interest tags, seasons and budget levels are string unions in `types.ts`; keep the database values identical to them.
+- Categories, interest tags, seasons and budget levels are string unions in `types.ts` and lookup tables in the database (`Category`, `InterestTag`, `Season`, `BudgetLevel`); keep the two identical. List fields live in child tables (`DestinationCategory`, `DestinationAlternateName`, `DestinationSource`, …), not array columns.
+- `prisma db seed` and `npm run cloudinary:seed` only add rows/photos that are missing; `--overwrite` resets existing ones to the `.ts` values.
 
 ## Design system
 

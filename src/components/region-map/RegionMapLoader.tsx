@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { Destination } from "@/lib/types";
+import type { MapPlace } from "@/lib/types";
 
 const RegionMap = dynamic(
   () => import("./RegionMap").then((module) => module.RegionMap),
@@ -13,10 +13,6 @@ const RegionMap = dynamic(
   },
 );
 
-export function RegionMapLoader({
-  destinations,
-}: {
-  destinations: Destination[];
-}) {
-  return <RegionMap destinations={destinations} />;
+export function RegionMapLoader({ places }: { places: MapPlace[] }) {
+  return <RegionMap places={places} />;
 }

@@ -30,8 +30,8 @@ import {
   seatFrame,
   type Frame,
 } from "@/lib/heroCamera";
-import type { SudurpaschimSvg } from "@/lib/types";
-import type { Destination } from "@/lib/types";
+import type { MapPlace, SudurpaschimSvg } from "@/lib/types";
+import { destinationHref } from "@/lib/site";
 import { DistrictNav } from "./DistrictNav";
 import { PlaceMarkers } from "./PlaceMarkers";
 import { PlaceHoverCard } from "./PlaceHoverCard";
@@ -90,7 +90,7 @@ const BORDER_STROKE = "var(--color-stone)";
 /** SVG paths keyed by district id (the JSON is in a different order than `districts`). */
 const svgById = Object.fromEntries(svg.districts.map((d) => [d.id, d]));
 
-export function HeroMap({ destinations }: { destinations: Destination[] }) {
+export function HeroMap({ places }: { places: MapPlace[] }) {
   const router = useRouter();
   const reduced = useReducedMotion();
 
@@ -240,7 +240,7 @@ export function HeroMap({ destinations }: { destinations: Destination[] }) {
 
   /** District under the pointer, if any — drives the premium hover state. */
   const [hoverId, setHoverId] = useState<string | null>(null);
-  const [placeHover, setPlaceHover] = useState<Destination | null>(null);
+  const [placeHover, setPlaceHover] = useState<MapPlace | null>(null);
   const [placePosition, setPlacePosition] = useState<{ x: number; y: number } | null>(
     null,
   );
@@ -291,7 +291,7 @@ export function HeroMap({ destinations }: { destinations: Destination[] }) {
   };
 
   const setPlaceAtPointer = useCallback(
-    (destination: Destination | null, event?: React.PointerEvent<SVGGElement>) => {
+    (destination: MapPlace | null, event?: React.PointerEvent<SVGGElement>) => {
       clearTimeout(placeCloseTimer.current);
       if (!destination || !event || !stageRef.current) {
         placeCloseTimer.current = setTimeout(() => {
@@ -312,10 +312,10 @@ export function HeroMap({ destinations }: { destinations: Destination[] }) {
   }, []);
 
   const openPlace = useCallback(
-    (destination: Destination, event?: React.PointerEvent<SVGGElement>) => {
+    (destination: MapPlace, event?: React.PointerEvent<SVGGElement>) => {
       if (event?.pointerType === "touch") {
         if (touchPlaceRef.current === destination.id) {
-          router.push(`/districts/${destination.districtId}/${destination.slug}`);
+          router.push(destinationHref(destination));
           touchPlaceRef.current = null;
         } else {
           touchPlaceRef.current = destination.id;
@@ -323,7 +323,7 @@ export function HeroMap({ destinations }: { destinations: Destination[] }) {
         }
         return;
       }
-      router.push(`/districts/${destination.districtId}/${destination.slug}`);
+      router.push(destinationHref(destination));
     },
     [router, setPlaceAtPointer],
   );
@@ -510,7 +510,7 @@ export function HeroMap({ destinations }: { destinations: Destination[] }) {
           </AnimatePresence>
 
           <PlaceMarkers
-            destinations={destinations}
+            places={places}
             markerScale={uscale}
             activeDistrictId={active?.id}
             onHover={setPlaceAtPointer}

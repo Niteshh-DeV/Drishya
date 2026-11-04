@@ -8,15 +8,18 @@ export function ThemeToggle() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    const isDark = document.documentElement.dataset.theme === "dark";
-    setDark(isDark);
+    setDark(document.documentElement.dataset.theme === "dark");
   }, []);
 
   function toggleTheme() {
     const nextDark = !dark;
     document.documentElement.dataset.theme = nextDark ? "dark" : "light";
-    localStorage.setItem(STORAGE_KEY, nextDark ? "dark" : "light");
     setDark(nextDark);
+    try {
+      localStorage.setItem(STORAGE_KEY, nextDark ? "dark" : "light");
+    } catch {
+      // Keep the in-page toggle working when browser storage is unavailable.
+    }
   }
 
   return (

@@ -14,11 +14,14 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Feature, Geometry } from "geojson";
 import type {
-  Destination,
   District,
   DistrictFeatureCollection,
   DistrictFeatureProperties,
+  MapPlace,
 } from "@/lib/types";
+import { cloudinaryUrl } from "@/lib/images";
+import { destinationHref } from "@/lib/site";
+import { OSM_TILES } from "@/components/map/leaflet";
 
 type ParkFeature = Feature<Geometry, { name?: string }>;
 
@@ -42,14 +45,14 @@ function MapPlaceCard({
   onPointerEnter,
   onPointerLeave,
 }: {
-  destination: Destination | null;
+  destination: MapPlace | null;
   point: { x: number; y: number } | null;
   district: District;
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
 }) {
   const reduced = useReducedMotion();
-  const image = destination?.media?.photos?.[0]?.secureUrl;
+  const image = destination?.coverUrl;
   const flipLeft = point ? point.x > 280 : false;
 
   return (
@@ -79,8 +82,9 @@ function MapPlaceCard({
           >
             {image ? (
               <img
-                src={image}
+                src={cloudinaryUrl(image, 224)}
                 alt=""
+                decoding="async"
                 className="absolute -left-14 -top-12 h-24 w-28 object-cover shadow-lg"
               />
             ) : (
@@ -100,7 +104,7 @@ function MapPlaceCard({
                 {destination.shortDescription}
               </p>
               <a
-                href={`/districts/${destination.districtId}/${destination.slug}`}
+                href={destinationHref(destination)}
                 className="mt-2 inline-flex text-xs font-semibold uppercase tracking-[0.16em] text-place-ink"
               >
                 View place →
@@ -167,32 +171,29 @@ function MapMarkerLayer({
   onHover,
 }: {
   district: District;
-  destinations: Destination[];
+  destinations: MapPlace[];
   onHover: (
-    destination: Destination | null,
+    destination: MapPlace | null,
     point?: { x: number; y: number },
   ) => void;
 }) {
   const map = useMap();
   const router = useRouter();
-  const [centered, setCentered] = useState<Destination | null>(null);
+  const [centered, setCentered] = useState<MapPlace | null>(null);
   const touchTarget = useRef<string | null>(null);
 
-  const showPlace = (destination: Destination) => {
-    const point = map.latLngToContainerPoint(destination.position!);
+  const showPlace = (destination: MapPlace) => {
+    const point = map.latLngToContainerPoint(destination.position);
     onHover(destination, point);
   };
 
   useEffect(() => {
     const update = () => {
+      const center = map.getCenter();
       const visible = destinations
-        .filter((destination) => destination.position)
         .map((destination) => ({
           destination,
-          distance: map.distance(
-            L.latLng(destination.position!),
-            map.getCenter(),
-          ),
+          distance: map.distance(L.latLng(destination.position), center),
         }))
         .sort((a, b) => a.distance - b.distance)[0]?.destination;
       setCentered(visible ?? null);
@@ -207,7 +208,6 @@ function MapMarkerLayer({
   return (
     <>
       {destinations.map((destination, index) => {
-        if (!destination.position) return null;
         const isCentered = centered?.id === destination.id;
         return (
           <Marker
@@ -226,9 +226,7 @@ function MapMarkerLayer({
                   event.originalEvent.type === "touchstart";
                 if (isTouch) {
                   if (touchTarget.current === destination.id) {
-                    router.push(
-                      `/districts/${destination.districtId}/${destination.slug}`,
-                    );
+                    router.push(destinationHref(destination));
                     touchTarget.current = null;
                   } else {
                     touchTarget.current = destination.id;
@@ -236,9 +234,7 @@ function MapMarkerLayer({
                   }
                   return;
                 }
-                router.push(
-                  `/districts/${destination.districtId}/${destination.slug}`,
-                );
+                router.push(destinationHref(destination));
               },
             }}
           />
@@ -254,14 +250,12 @@ function FitToFeature({
   destinations,
 }: {
   feature: Feature;
-  destinations: Destination[];
+  destinations: MapPlace[];
 }) {
   const map = useMap();
   useEffect(() => {
     const bounds = L.geoJSON(feature).getBounds();
-    destinations.forEach((destination) => {
-      if (destination.position) bounds.extend(destination.position);
-    });
+    destinations.forEach((destination) => bounds.extend(destination.position));
     if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [24, 24] });
     }
@@ -271,19 +265,17 @@ function FitToFeature({
 
 export default function DistrictMap({
   district,
-  destinations,
-  compact = false,
+  places: destinations,
 }: {
   district: District;
-  destinations: Destination[];
-  compact?: boolean;
+  places: MapPlace[];
 }) {
   const [feature, setFeature] = useState<Feature<
     Geometry,
     DistrictFeatureProperties
   > | null>(null);
   const [parkFeature, setParkFeature] = useState<ParkFeature | null>(null);
-  const [hoveredPlace, setHoveredPlace] = useState<Destination | null>(null);
+  const [hoveredPlace, setHoveredPlace] = useState<MapPlace | null>(null);
   const [hoverPoint, setHoverPoint] = useState<{ x: number; y: number } | null>(
     null,
   );
@@ -305,7 +297,10 @@ export default function DistrictMap({
   useEffect(() => {
     let cancelled = false;
     fetch("/data/sudurpaschim-districts.simplified.geojson")
-      .then((r) => r.json())
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to load district boundaries");
+        return response.json() as Promise<DistrictFeatureCollection>;
+      })
       .then((fc: DistrictFeatureCollection) => {
         if (cancelled) return;
         setFeature(fc.features.find((f) => f.properties.id === district.id) ?? null);
@@ -336,9 +331,7 @@ export default function DistrictMap({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-2xl border border-line ${
-        compact ? "h-72" : "h-[65vh] min-h-[420px]"
-      }`}
+      className="relative h-[65vh] min-h-[420px] w-full overflow-hidden rounded-2xl border border-line"
     >
       <MapContainer
         center={district.center}
@@ -351,10 +344,7 @@ export default function DistrictMap({
         className="h-full w-full"
       >
         <MarkerGlow />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <TileLayer {...OSM_TILES} />
         {feature && (
           <>
             <GeoJSON

@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PageTransition } from "@/components/site/PageTransition";
+import { SITE_URL } from "@/lib/site";
 
 /** Editorial serif for hero display type; exposed as the CSS var --font-cormorant. */
 const cormorant = Cormorant_Garamond({
@@ -14,13 +15,8 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.SITE_URL ||
-  "https://drishya.vercel.app";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Drishya — Explore Sudurpaschim",
     template: "%s | Drishya",
@@ -47,7 +43,7 @@ export const metadata: Metadata = {
       "Discover the districts, paths, and unforgettable places of western Nepal through an immersive travel experience.",
     type: "website",
     locale: "en_US",
-    url: siteUrl,
+    url: SITE_URL,
     siteName: "Drishya",
   },
   twitter: {
@@ -66,7 +62,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(()=>{const t=localStorage.getItem("drishya-theme");if(t==="dark")document.documentElement.dataset.theme="dark"})()`,
+            __html: `(()=>{try{const t=localStorage.getItem("drishya-theme");if(t==="dark")document.documentElement.dataset.theme="dark"}catch{}})()`,
           }}
         />
       </head>

@@ -2,25 +2,25 @@
 
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import type { Destination } from "@/lib/types";
+import type { MapPlace } from "@/lib/types";
 import { geographicToHeroPoint } from "@/lib/placeMap";
 
 interface PlaceMarkersProps {
-  destinations: Destination[];
+  places: MapPlace[];
   markerScale: number;
   activeDistrictId?: string;
   onHover: (
-    destination: Destination | null,
+    destination: MapPlace | null,
     event?: ReactPointerEvent<SVGGElement>,
   ) => void;
   onOpen: (
-    destination: Destination,
+    destination: MapPlace,
     event?: ReactPointerEvent<SVGGElement>,
   ) => void;
 }
 
 export function PlaceMarkers({
-  destinations,
+  places,
   markerScale,
   activeDistrictId,
   onHover,
@@ -29,9 +29,8 @@ export function PlaceMarkers({
   const reduced = useReducedMotion();
 
   return (
-    <g aria-label="Destinations">
-      {destinations.map((destination, index) => {
-        if (!destination.position) return null;
+    <g aria-label="MapPlaces">
+      {places.map((destination, index) => {
         const [x, y] = geographicToHeroPoint(destination.position);
         const isCentered = destination.districtId === activeDistrictId;
 

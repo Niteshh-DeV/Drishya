@@ -4,8 +4,8 @@ import { getDistrict } from "@/data/districts";
 import { PlaceDetail } from "@/components/place/PlaceDetail";
 import {
   getAllDestinationParams,
-  getAllDestinations,
   getDestination,
+  getNextDestination,
 } from "@/lib/db/destinations";
 
 export const revalidate = 3600;
@@ -57,10 +57,7 @@ export default async function DestinationPage({
   const destination = await getDestination(district.id, destinationSlug);
   if (!destination) notFound();
 
-  const allDestinations = await getAllDestinations();
-  const index = allDestinations.findIndex((place) => place.id === destination.id);
-  const nextDestination =
-    allDestinations[(index + 1) % allDestinations.length];
+  const nextDestination = await getNextDestination(destination);
   const nextDistrict = nextDestination
     ? getDistrict(nextDestination.districtId)
     : undefined;
@@ -69,7 +66,7 @@ export default async function DestinationPage({
     <PlaceDetail
       destination={destination}
       district={district}
-      nextPlace={nextDestination}
+      nextPlace={nextDestination ?? undefined}
       nextDistrict={nextDistrict}
     />
   );
