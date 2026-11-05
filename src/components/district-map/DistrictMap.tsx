@@ -21,7 +21,7 @@ import type {
 } from "@/lib/types";
 import { cloudinaryUrl } from "@/lib/images";
 import { destinationHref } from "@/lib/site";
-import { OSM_TILES } from "@/components/map/leaflet";
+import { BASE_TILES } from "@/components/map/leaflet";
 
 type ParkFeature = Feature<Geometry, { name?: string }>;
 
@@ -336,6 +336,7 @@ export default function DistrictMap({
       <MapContainer
         center={district.center}
         zoom={9}
+        zoomSnap={0.25}
         scrollWheelZoom
         dragging
         doubleClickZoom
@@ -344,7 +345,7 @@ export default function DistrictMap({
         className="h-full w-full"
       >
         <MarkerGlow />
-        <TileLayer {...OSM_TILES} />
+        <TileLayer {...BASE_TILES} />
         {feature && (
           <>
             <GeoJSON

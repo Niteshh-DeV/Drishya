@@ -1,8 +1,15 @@
 import L from "leaflet";
 
-/** OpenStreetMap tiles shared by every Leaflet map on the site. */
-export const OSM_TILES = {
+/**
+ * OpenStreetMap tiles shared by every Leaflet map on the site. They need no
+ * key or account. The `.leaflet-tile-pane` filter in globals.css softens
+ * their colours toward the paper palette. (CARTO's lighter basemaps were
+ * tried, but they now require an API key and serve placeholder tiles
+ * without one.)
+ */
+export const BASE_TILES = {
   url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  maxZoom: 19,
   attribution:
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 };

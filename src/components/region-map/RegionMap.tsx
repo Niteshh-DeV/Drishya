@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { MapPlace } from "@/lib/types";
 import { destinationHref } from "@/lib/site";
-import { OSM_TILES, teardropPin } from "@/components/map/leaflet";
+import { BASE_TILES, teardropPin } from "@/components/map/leaflet";
 
 const pin = teardropPin("var(--color-forest)", "region-destination-pin");
 const gemPin = teardropPin("var(--color-brass)", "region-destination-pin");
@@ -74,6 +74,7 @@ export function RegionMap({ places }: { places: MapPlace[] }) {
       <MapContainer
         center={[29.2, 80.9]}
         zoom={8}
+        zoomSnap={0.25}
         scrollWheelZoom
         dragging
         doubleClickZoom
@@ -81,7 +82,7 @@ export function RegionMap({ places }: { places: MapPlace[] }) {
         zoomControl
         className="h-full w-full"
       >
-        <TileLayer {...OSM_TILES} />
+        <TileLayer {...BASE_TILES} />
         <FitRegion boundaries={boundaries} places={places} />
         {boundaries && (
           <>
