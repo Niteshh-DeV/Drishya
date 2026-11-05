@@ -21,6 +21,7 @@ model District {
   blurb     String
 
   destinations Destination[]
+  blogPosts    BlogPostDistrict[]
 }
 
 /// Mirrors the `Destination` type in src/lib/types.ts. List-valued fields
@@ -70,6 +71,7 @@ model Destination {
   sources        DestinationSource[]
   verifications  DestinationVerification[]
   images         DestinationImage[]
+  blogPosts      BlogPostDestination[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,6 +108,7 @@ model Category {
 model InterestTag {
   name         String                @id // "Trekking"
   destinations DestinationInterest[]
+  blogPosts    BlogPostTag[]
 }
 
 model Season {
@@ -188,4 +191,169 @@ model DestinationVerification {
   field         String
 
   @@id([destinationId, field])
+}
+
+// ── Blog ─────────────────────────────────────────────────────────────────
+// Travelers write a post as a title, cover and an ordered list of sections;
+// the post page stitches the sections back together. Nothing reaches the
+// public site until an admin moves it to `published`.
+
+enum BlogPostStatus {
+  draft
+  pending
+  published
+  rejected
+}
+
+model BlogPost {
+  id      String @id @default(cuid())
+  slug    String @unique
+  title   String
+  /// One or two sentences for cards and link previews.
+  excerpt String
+
+  coverPublicId String?
+  coverUrl      String?
+  coverCredit   String?
+
+  /// Byline as shown on the post; starts as the author's account name.
+  authorName String
+  /// Null for the team's seeded sample post. A deleted account takes its
+  /// posts with it — Facebook's data-deletion rules expect exactly that.
+  authorId   String?
+  author     User?   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  status      BlogPostStatus @default(draft)
+  publishedAt DateTime?
+  /// Why the team didn't approve it, shown to the author on "My stories".
+  reviewNote  String?
+
+  sections     BlogPostSection[]
+  districts    BlogPostDistrict[]
+  destinations BlogPostDestination[]
+  tags         BlogPostTag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([authorId])
+}
+
+/// One block of a post. Saving a post replaces its sections wholesale, so
+/// `position` is simply 0, 1, 2… in reading order.
+model BlogPostSection {
+  id            String   @id @default(cuid())
+  postId        String
+  post          BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  position      Int
+  heading       String?
+  body          String
+  imagePublicId String?
+  imageUrl      String?
+  imageCaption  String?
+
+  @@index([postId, position])
+}
+
+model BlogPostDistrict {
+  postId     String
+  post       BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  districtId String
+  district   District @relation(fields: [districtId], references: [id])
+
+  @@id([postId, districtId])
+  @@index([districtId])
+}
+
+model BlogPostDestination {
+  postId        String
+  post          BlogPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  position      Int
+
+  @@id([postId, destinationId])
+  @@index([destinationId])
+}
+
+model BlogPostTag {
+  postId  String
+  post    BlogPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagName String
+  tag     InterestTag @relation(fields: [tagName], references: [name], onUpdate: Cascade)
+
+  @@id([postId, tagName])
+  @@index([tagName])
+}
+
+// ── Accounts (Auth.js) ───────────────────────────────────────────────────
+// User, Account, Session and VerificationToken follow the shape the
+// @auth/prisma-adapter expects; `role` is ours. Travelers sign in with
+// Google or Facebook — no passwords are stored.
+
+enum UserRole {
+  traveler
+  guide
+  admin
+}
+
+model User {
+  id    String @id @default(cuid())
+  name  String?
+  /// Facebook accounts registered with a phone number have no email.
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(traveler)
+
+  accounts  Account[]
+  sessions  Session[]
+  blogPosts BlogPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// Only used by email sign-in, which Drishya doesn't offer yet; the adapter
+/// expects the table to exist.
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
 }
