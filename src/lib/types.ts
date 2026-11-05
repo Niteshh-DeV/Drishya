@@ -113,6 +113,97 @@ export interface MapPlace {
   coverUrl?: string;
 }
 
+/** Matches the `UserRole` enum in prisma/schema.prisma. */
+export type UserRole = "traveler" | "guide" | "admin";
+
+export type BlogPostStatus = "draft" | "pending" | "published" | "rejected";
+
+/** One block of a blog post, in reading order. */
+export interface BlogPostSection {
+  id: string;
+  heading?: string;
+  body: string;
+  imageUrl?: string;
+  imageCaption?: string;
+}
+
+/** A destination a post is about — enough for a linked card and a map pin. */
+export interface BlogPlaceLink {
+  id: string;
+  slug: string;
+  districtId: string;
+  name: string;
+  shortDescription: string;
+  /** `null` where the destination has no verified coordinates. */
+  position: [number, number] | null;
+  coverUrl?: string;
+}
+
+/** What a post card needs. Dates are ISO strings so the object stays serializable. */
+export interface BlogPostSummary {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverUrl?: string;
+  coverCredit?: string;
+  authorName: string;
+  /** The author's Google/Facebook profile photo, when they have one. */
+  authorImage?: string;
+  /** Written by the Drishya team (no traveler account behind it). */
+  byTeam: boolean;
+  publishedAt: string;
+  readingMinutes: number;
+  districtIds: string[];
+  tags: InterestTag[];
+}
+
+export interface BlogPost extends BlogPostSummary {
+  sections: BlogPostSection[];
+  destinations: BlogPlaceLink[];
+}
+
+/** An image already uploaded to Cloudinary. */
+export interface BlogImage {
+  publicId: string;
+  url: string;
+}
+
+/** What the writing form sends and edits — a post before it is saved. */
+export interface BlogPostInput {
+  title: string;
+  excerpt: string;
+  authorName: string;
+  cover?: BlogImage;
+  coverCredit?: string;
+  sections: {
+    heading?: string;
+    body: string;
+    image?: BlogImage;
+    imageCaption?: string;
+  }[];
+  destinationIds: string[];
+  tags: InterestTag[];
+}
+
+/** A row on the author's "My stories" page. */
+export interface AuthorPostSummary {
+  id: string;
+  slug: string;
+  title: string;
+  status: BlogPostStatus;
+  updatedAt: string;
+  /** The reviewer's note when a story was sent back or taken down. */
+  reviewNote?: string;
+}
+
+/** A destination as offered in the writing form's place picker. */
+export interface DestinationOption {
+  id: string;
+  name: string;
+  districtId: string;
+}
+
 /** A district of Sudurpaschim Province. Single source of truth: `src/data/districts.ts`. */
 export interface District {
   id: string;

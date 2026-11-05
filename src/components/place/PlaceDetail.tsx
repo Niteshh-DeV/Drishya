@@ -1,7 +1,14 @@
 import Link from "next/link";
+import { RelatedStories } from "@/components/blog/PostCard";
 import { Reveal } from "@/components/site/Reveal";
 import { cloudinaryUrl, coverImageUrl } from "@/lib/images";
-import type { Destination, DestinationImage, District } from "@/lib/types";
+import { displayTitleSize } from "@/lib/typography";
+import type {
+  BlogPostSummary,
+  Destination,
+  DestinationImage,
+  District,
+} from "@/lib/types";
 import { DestinationMapLoader } from "./DestinationMapLoader";
 import { PlaceCoverImage } from "./PlaceCoverImage";
 import { PlaceMenu } from "./PlaceMenu";
@@ -11,6 +18,7 @@ interface PlaceDetailProps {
   district: District;
   nextPlace?: { slug: string; name: string };
   nextDistrict?: District;
+  stories?: BlogPostSummary[];
 }
 
 /** Keeps [label, text] rows whose text is present. */
@@ -52,6 +60,7 @@ export function PlaceDetail({
   district,
   nextPlace,
   nextDistrict,
+  stories = [],
 }: PlaceDetailProps) {
   const image = coverImageUrl(destination);
   const gallery = destination.photos?.slice(1) ?? [];
@@ -60,7 +69,6 @@ export function PlaceDetail({
     : [destination.shortDescription];
   const notes = present([
     ["Cultural note", destination.culturalNote],
-    ["Best for", destination.bestFor],
     ["Safety notes", destination.safetyNotes],
   ]);
   const info = present([
@@ -100,7 +108,10 @@ export function PlaceDetail({
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
             {district.name}
           </p>
-          <h1 className="font-display mt-5 max-w-full break-words text-[clamp(3rem,11vw,9.5rem)] font-medium uppercase leading-[0.88] tracking-[0.06em] text-ink [overflow-wrap:anywhere]">
+          <h1
+            className="font-display mt-5 max-w-full text-balance break-words font-medium uppercase leading-[0.88] tracking-[0.06em] text-ink"
+            style={{ fontSize: displayTitleSize(destination.name, { maxRem: 9.5, containerRem: 64 }) }}
+          >
             {destination.name}
           </h1>
           {destination.nameNepali && (
@@ -135,10 +146,23 @@ export function PlaceDetail({
           className="mx-auto mt-32 max-w-6xl"
           delay={0.15}
         >
-          <div className="grid gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-            <div className="font-display text-[clamp(2rem,4vw,4.5rem)] leading-[1.05] text-ink">
-              {destination.bestFor || destination.shortDescription}
-            </div>
+          {/* The short description already sits under the title, so the side
+              column shows "Best for" only when there is one. */}
+          <div
+            className={
+              destination.bestFor
+                ? "grid gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:items-start"
+                : "mx-auto max-w-3xl"
+            }
+          >
+            {destination.bestFor && (
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-muted">Best for</p>
+                <p className="font-display mt-4 text-[clamp(1.6rem,2.6vw,2.6rem)] leading-[1.2] text-ink">
+                  {destination.bestFor}
+                </p>
+              </div>
+            )}
             <div className="space-y-6 text-base leading-[1.9] text-muted sm:text-lg">
               {paragraphs.map((paragraph, index) => (
                 <RevealSection key={`${paragraph.slice(0, 20)}-${index}`} delay={index * 0.15}>
@@ -319,6 +343,8 @@ export function PlaceDetail({
             ))}
           </RevealSection>
         )}
+
+        <RelatedStories posts={stories} placeName={destination.name} />
 
         <RevealSection className="mx-auto mt-36 flex max-w-5xl flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-end sm:justify-between" delay={0.15}>
           <Link href="/map" className="text-sm uppercase tracking-[0.2em] text-muted hover:text-accent-ink">

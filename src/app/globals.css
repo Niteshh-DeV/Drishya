@@ -339,17 +339,6 @@ html[data-theme="dark"] .leaflet-tile {
   animation: place-marker-pulse 2.2s ease-in-out infinite;
 }
 
-.place-topbar {
-  position: fixed;
-  inset: 0 0 auto;
-  z-index: 40;
-  display: flex;
-  justify-content: space-between;
-  padding: 1.35rem clamp(1.25rem, 4vw, 4rem);
-  background: color-mix(in srgb, var(--color-paper) 88%, transparent);
-  backdrop-filter: blur(14px);
-}
-
 .bg-place-card {
   background: var(--color-place-card);
 }
@@ -425,4 +414,17 @@ html[data-theme="dark"] .leaflet-tile {
   .district-destination-pin svg {
     animation: none;
   }
+}
+
+/*
+ * Mutes the default OpenStreetMap colours so Leaflet maps sit on the paper
+ * palette: less saturated greens and roads, a slight warm cast. Only the
+ * tiles are filtered — district outlines and pins keep their true colours.
+ */
+.leaflet-tile-pane {
+  filter: saturate(0.5) sepia(0.12) brightness(1.03) contrast(0.95);
+}
+
+html[data-theme="dark"] .leaflet-tile-pane {
+  filter: saturate(0.4) sepia(0.1) brightness(0.82) contrast(0.95);
 }

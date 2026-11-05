@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PageTransition } from "@/components/site/PageTransition";
+import { SessionProvider } from "@/components/site/SessionProvider";
 import { SITE_URL } from "@/lib/site";
 
 /** Editorial serif for hero display type; exposed as the CSS var --font-cormorant. */
@@ -66,10 +67,12 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen">
-        <Header />
-        <PageTransition>{children}</PageTransition>
-        <Footer />
+      <body className="flex min-h-screen flex-col">
+        <SessionProvider>
+          <Header />
+          <PageTransition>{children}</PageTransition>
+          <Footer />
+        </SessionProvider>
       </body>
     </html>
   );

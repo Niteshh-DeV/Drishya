@@ -21,7 +21,9 @@ Prefer changes that are small, reviewable, and consistent with what already exis
 - `motion` (Framer Motion) for animation
 - Leaflet 1.9 + react-leaflet 5 for geographic maps
 - Prisma 7 + Neon (Postgres) for content data
-- Planned, not yet built: Auth.js (guide login), Cloudinary (images), Upstash Vector + sentence-transformers + Groq/OpenRouter (RAG assistant), recommendation engine
+- Auth.js v5 (`next-auth@5` beta) with Google + Facebook sign-in, Prisma adapter, database sessions
+- Cloudinary for destination photos and blog uploads
+- Planned, not yet built: Upstash Vector + sentence-transformers + Groq/OpenRouter (RAG assistant), recommendation engine
 - Hosting: Vercel. Everything must stay on free tiers.
 
 ## Commands
@@ -44,7 +46,9 @@ npx prisma db seed
 npx prisma studio
 ```
 
-Env vars (`.env.local`, also set in Vercel): `DATABASE_URL` (Neon pooled, used at runtime) and `DIRECT_URL` (Neon direct, used by the Prisma CLI).
+Env vars (`.env.local`, also set in Vercel): `DATABASE_URL` (Neon pooled, used at runtime) and `DIRECT_URL` (Neon direct, used by the Prisma CLI); `CLOUDINARY_*`; `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET`, `AUTH_FACEBOOK_ID/SECRET`. `AUTH_URL=http://localhost:3000` is for local dev only — `npm run dev` binds to 0.0.0.0, and OAuth callbacks are registered for localhost. Don't set it on Vercel. See `.env.example`.
+
+Apply migrations to Neon with `prisma migrate diff` + `prisma migrate deploy`, not `migrate dev`: if `migrate dev` detects drift it offers to reset the database, which would wipe the content. After a migration, restart `npm run dev` — the dev server caches the old Prisma client on `globalThis`.
 
 ## Project structure
 
@@ -54,7 +58,11 @@ src/
     page.tsx                 Landing: pinned hero map + district grid
     districts/[slug]/        District page (Leaflet map + destinations)
       [destination]/         Destination detail page
-    blog/, guide-connect/, hidden-gems/   Currently placeholder shells (lorem ipsum)
+    blog/                    Index + [slug] post page (public, prerendered)
+      write/, write/[id]/, mine/   Traveler editor + "My stories" (signed in)
+    admin/posts/             Review queue (admin role only)
+    signin/, account/, privacy/    Auth.js sign-in, account deletion, privacy policy
+    guide-connect/, hidden-gems/   Placeholder shells
   components/
     site/                    Header (floating "dock"), Footer, Logo, ThemeToggle, Reveal, PageTransition
     hero-map/                HeroMap (scroll-driven SVG camera), DistrictNav (bottom ruler)
@@ -68,7 +76,10 @@ src/
   lib/
     types.ts                 Shared types (District, Destination, Poi, …)
     pathBounds.ts, heroCamera.ts   Hero camera math
-    db/                      Prisma client + data-access layer
+    db/                      Prisma client + data-access layer (destinations, blog,
+                             blog-authoring, blog-review, users)
+    blog-input.ts            Post limits + validation shared by editor and server actions
+  auth.ts                    Auth.js config (providers, adapter, session callback)
   generated/prisma/          Generated Prisma client (gitignored)
 prisma/                      schema.prisma, seed.ts, migrations/
 public/data/                 sudurpaschim-districts.simplified.geojson (fed to Leaflet)
@@ -80,7 +91,7 @@ map-data/                    Source-of-truth map data archive
 **Two map layers, by design.** The landing hero is a custom SVG whose animated `viewBox` is a scroll-driven camera; district pages use real geography via react-leaflet + GeoJSON. Don't merge them or swap one for the other.
 
 **Data flow.** Destination content lives in Postgres. The `.ts` files in `src/data/` are *seed sources*, not runtime data.
-- Pages and components import destination data **only** from `src/lib/db/destinations.ts`. Never import the Prisma client or the `src/data/<district>.ts` files from UI code.
+- Pages and components import destination data **only** from `src/lib/db/destinations.ts` (blog data from the `src/lib/db/blog*.ts` files). Never import the Prisma client or the `src/data/<district>.ts` files from UI code.
 - The data layer returns plain serializable objects (`Destination`), safe to pass from server components into client components.
 - Client components (including the Leaflet map) never fetch destination data themselves; a server component passes it as props.
 - Pages are prerendered (`generateStaticParams`) with `export const revalidate = 3600`, so the demo still works if the DB is briefly unreachable. Don't switch pages to per-request dynamic rendering.
@@ -91,7 +102,24 @@ map-data/                    Source-of-truth map data archive
 - Leaflet touches `window`, so maps load through a `"use client"` wrapper using `dynamic(..., { ssr: false })`.
 - Read the Next.js docs in `node_modules/next/dist/docs/` before using any API you aren't sure about.
 
+**Map tiles.** Every Leaflet map uses `BASE_TILES` from `src/components/map/leaflet.ts` (key-less OpenStreetMap tiles); a `.leaflet-tile-pane` filter in globals.css mutes them to the palette. CARTO's basemaps now need an API key, so don't switch to them.
+
+**Display titles.** Huge uppercase place/district names take their size from `displayTitleSize()` (`src/lib/typography.ts`), so the longest word always fits on one line. Don't use `overflow-wrap:anywhere` on them; it splits words.
+
 **Server vs client.** Default to server components. Add `"use client"` only where needed (maps, motion, state, event handlers).
+
+## Blog and accounts
+
+- Anyone reads; travelers sign in (Google/Facebook via Auth.js) to write. Posts are a title, summary, cover and ordered sections (`BlogPostSection`); the post page stitches them together with `PostBody`. User text is rendered as plain React text — never as HTML.
+- Status flow: `draft` → `pending` → `published` | `rejected`. Only admins publish (`/admin/posts`). Editing a published post sends it back to review. `src/lib/db/blog.ts` returns published posts only; author and review queries live in `blog-authoring.ts` and `blog-review.ts`.
+- Server actions re-check the session and validate input with `validatePostInput`; author functions take the user id and enforce ownership in the query.
+- Photos upload from the browser straight to Cloudinary with a server-signed request, into `drishya/blog/<userId>/`. Saves reject images outside that folder.
+- Publishing, unpublishing and deleting call `revalidatePath` for `/blog`, the post, and the district/destination pages showing "Stories from here".
+- **Never call `auth()` from a layout or a prerendered page** — it reads cookies and would make every route dynamic. The header reads the session client-side (`useSession`); only `/signin`, `/account`, `/blog/write*`, `/blog/mine` and `/admin/*` call `auth()`.
+- Roles (`traveler` | `guide` | `admin`) live on `User.role`. Sessions are in the database, so role changes apply on the next request. Grant admin in Prisma Studio.
+- Posts without an author account (`byTeam`) are labelled "From the Drishya team"; never present them as traveler stories.
+- Post rendering is shared: `PostBody` (sections), `PostCard`/`Byline`/`RelatedStories`, `PlacesInStory` + `StoryMap` (Leaflet, client-only). The editor autosaves only drafts — autosaving a pending or published post would change its review status.
+- Traveler stories are personal accounts. Label them as such, and don't treat them as verified destination facts (including in the future RAG corpus).
 
 ## Content data rules (important)
 

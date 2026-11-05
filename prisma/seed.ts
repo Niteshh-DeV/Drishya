@@ -1,5 +1,6 @@
 /**
- * Seeds districts + destinations from the TypeScript data files.
+ * Seeds districts, destinations and the sample blog post from the TypeScript
+ * data files.
  *
  *   npx prisma db seed                    # add new rows only
  *   npx prisma db seed -- --overwrite     # also rewrite existing rows
@@ -21,6 +22,7 @@ import type {
 } from "../src/lib/types";
 import { districts } from "../src/data/districts";
 import { achhamDestinations } from "./data/achham";
+import { blogPosts, type BlogPostSeed } from "./data/blog";
 import { baitadiDestinations } from "./data/baitadi";
 import { bajuraDestinations } from "./data/bajura";
 import { bajhangDestinations } from "./data/bajhang";
@@ -186,6 +188,88 @@ async function main() {
     `Destinations ${overwrite ? "upserted" : "added"}: ${destinationsWritten}` +
       (overwrite ? "" : ` (skipped ${allDestinations.length - destinationsWritten} already in the database)`),
   );
+
+  await seedBlogPosts();
+}
+
+/**
+ * Photos come from the destination's Cloudinary gallery already in the
+ * database, so run `npm run cloudinary:seed` first for posts to get images.
+ */
+async function blogPostData(post: BlogPostSeed) {
+  const gallery = post.photosFrom
+    ? await prisma.destinationImage.findMany({
+        where: { destinationId: post.photosFrom },
+        orderBy: { sortOrder: "asc" },
+      })
+    : [];
+  const cover = gallery[0];
+  const districtIds = await prisma.destination.findMany({
+    where: { id: { in: post.destinationIds } },
+    select: { districtId: true },
+    distinct: ["districtId"],
+  });
+  return {
+    title: post.title,
+    excerpt: post.excerpt,
+    authorName: post.authorName,
+    status: "published" as const,
+    publishedAt: new Date(post.publishedAt),
+    coverPublicId: cover?.publicId ?? null,
+    coverUrl: cover?.secureUrl ?? null,
+    coverCredit: cover?.credit ?? null,
+    sections: {
+      create: post.sections.map((section, position) => {
+        const photo = section.photoIndex != null ? gallery[section.photoIndex] : undefined;
+        return {
+          position,
+          heading: section.heading ?? null,
+          body: section.body,
+          imagePublicId: photo?.publicId ?? null,
+          imageUrl: photo?.secureUrl ?? null,
+          imageCaption: photo ? section.imageCaption ?? null : null,
+        };
+      }),
+    },
+    destinations: {
+      create: post.destinationIds.map((destinationId, position) => ({ destinationId, position })),
+    },
+    districts: { create: districtIds.map(({ districtId }) => ({ districtId })) },
+    tags: { create: post.tags.map((tagName) => ({ tagName })) },
+  };
+}
+
+async function seedBlogPosts() {
+  const destinationIds = new Set(allDestinations.map((x) => x.id));
+  let written = 0;
+  for (const post of blogPosts) {
+    for (const id of post.destinationIds) {
+      if (!destinationIds.has(id)) throw new Error(`blog ${post.slug}: unknown destination "${id}"`);
+    }
+    for (const t of post.tags) if (!INTEREST_TAGS.includes(t)) throw new Error(`blog ${post.slug}: bad tag "${t}"`);
+
+    const existing = await prisma.blogPost.findUnique({ where: { slug: post.slug }, select: { id: true } });
+    if (existing && !overwrite) continue;
+    const data = await blogPostData(post);
+    if (existing) {
+      const reset = { deleteMany: {} };
+      await prisma.blogPost.update({
+        where: { id: existing.id },
+        data: {
+          ...data,
+          sections: { ...reset, ...data.sections },
+          destinations: { ...reset, ...data.destinations },
+          districts: { ...reset, ...data.districts },
+          tags: { ...reset, ...data.tags },
+        },
+      });
+    } else {
+      await prisma.blogPost.create({ data: { slug: post.slug, ...data } });
+    }
+    written += 1;
+    console.log(`  ${overwrite ? "upserted" : "added"} blog post ${post.slug}`);
+  }
+  console.log(`Blog posts ${overwrite ? "upserted" : "added"}: ${written}`);
 }
 
 main()

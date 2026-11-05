@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { OSM_TILES, teardropPin } from "@/components/map/leaflet";
+import { BASE_TILES, teardropPin } from "@/components/map/leaflet";
 
 const destinationPin = teardropPin("var(--color-brass)", "destination-map-pin");
 
@@ -25,7 +25,7 @@ export function DestinationMap({
         zoomControl
         className="h-full w-full"
       >
-        <TileLayer {...OSM_TILES} />
+        <TileLayer {...BASE_TILES} />
         <Marker position={position} icon={destinationPin} title={name}>
           <Popup>{name}</Popup>
         </Marker>
