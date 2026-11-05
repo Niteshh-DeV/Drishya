@@ -38,7 +38,7 @@ const summarySelect = {
 } satisfies Prisma.BlogPostSelect;
 
 const postInclude = {
-  author: { select: { image: true } },
+  author: { select: { image: true, bio: true } },
   sections: { orderBy: { position: "asc" } },
   districts: { select: { districtId: true } },
   tags: { select: { tagName: true } },
@@ -82,6 +82,7 @@ function toSummary(r: SummaryRow): BlogPostSummary {
     authorName: r.authorName,
     authorImage: r.author?.image ?? undefined,
     byTeam: r.authorId == null,
+    authorId: r.authorId ?? undefined,
     // The `published` filter guarantees a publish date.
     publishedAt: r.publishedAt!.toISOString(),
     readingMinutes: readingMinutes(r.sections),
@@ -95,6 +96,7 @@ type PostRow = Prisma.BlogPostGetPayload<{ include: typeof postInclude }>;
 function toPost(r: PostRow): BlogPost {
   return {
     ...toSummary(r),
+    authorBio: r.author?.bio ?? undefined,
     sections: r.sections.map((section) => ({
       id: section.id,
       heading: section.heading ?? undefined,
@@ -183,6 +185,25 @@ export async function getMoreStories(
     select: summarySelect,
   });
   return rows.map(toSummary);
+}
+
+/** A traveler's published stories, newest first, for their public page. */
+export async function getPublishedPostsByAuthor(authorId: string): Promise<BlogPostSummary[]> {
+  const rows = await prisma.blogPost.findMany({
+    where: { ...published, authorId },
+    orderBy: newestFirst,
+    select: summarySelect,
+  });
+  return rows.map(toSummary);
+}
+
+/** Slugs of a traveler's published stories, to refresh after a profile edit. */
+export async function getPublishedPostSlugsByAuthor(authorId: string): Promise<string[]> {
+  const rows = await prisma.blogPost.findMany({
+    where: { ...published, authorId },
+    select: { slug: true },
+  });
+  return rows.map((row) => row.slug);
 }
 
 /** Slugs and dates for the sitemap. */
