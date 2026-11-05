@@ -11,14 +11,21 @@ interface FooterLink {
 }
 
 const FOOTER_LINKS: FooterLink[] = [
-  { label: "Map", href: "/" },
-  { label: "Blog", href: "/blog" },
-  { label: "Guide Connect", href: "/guide-connect" },
+  { label: "Home", href: "/" },
+  { label: "Map", href: "/map" },
   { label: "Hidden Gems", href: "/hidden-gems" },
-  { label: "niteshjoshi.me", href: "https://niteshjoshi.me", external: true },
+  { label: "Field Notes", href: "/blog" },
+  { label: "Guide Connect", href: "/guide-connect" },
+  { label: "Privacy", href: "/privacy" },
 ];
 
-const SOCIAL_PLACEHOLDERS = ["Instagram", "YouTube", "Contact"];
+/** Team members; a `href` links the name to their own site. */
+const TEAM: { name: string; href?: string }[] = [
+  { name: "Nitesh Joshi", href: "https://niteshjoshi.me" },
+  { name: "Bipana Dhami" },
+  { name: "Pooja Bhatt" },
+  { name: "Gomati Badu" },
+];
 
 export function Footer() {
   const pathname = usePathname();
@@ -31,11 +38,29 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-3 max-w-md text-sm leading-relaxed text-stone/85">
-            Drishya · FWU tourism project. Built by the team to map stories,
-            stays, and local routes across Sudurpaschim.
+            The districts, destinations and traveler stories of Nepal&apos;s
+            Sudurpaschim Province, in one place. A Computer Engineering minor
+            project at Far Western University.
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.16em] text-stone/65">
-            Team credit: Nitesh Joshi · Bipana Dhami · Pooja Bhatt · Gomati Badu
+            Built by{" "}
+            {TEAM.map((member, index) => (
+              <span key={member.name}>
+                {index > 0 && " · "}
+                {member.href ? (
+                  <a
+                    href={member.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="underline-offset-4 transition-colors hover:text-brass-light hover:underline"
+                  >
+                    {member.name}
+                  </a>
+                ) : (
+                  member.name
+                )}
+              </span>
+            ))}
           </p>
         </div>
 
@@ -53,9 +78,6 @@ export function Footer() {
               </Link>
             ))}
           </nav>
-          <p className="mt-3 text-xs text-stone/70">
-            {SOCIAL_PLACEHOLDERS.join(" · ")} · coming soon
-          </p>
           <p className="mt-3 text-xs uppercase tracking-[0.16em] text-stone/65">
             © {year} Drishya
           </p>
