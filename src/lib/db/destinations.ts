@@ -13,6 +13,7 @@ import type {
   Category,
   DestinationImage,
   Destination,
+  DestinationOption,
   InterestTag,
   MapPlace,
   Season,
@@ -59,6 +60,20 @@ function toImage(image: ImageRow): DestinationImage {
   };
 }
 
+/**
+ * Some seed files used `hiddenGemReason` for editorial notes ("Provisional.")
+ * rather than a reason; those read as broken copy, so they're dropped here
+ * without touching the stored rows.
+ */
+const PLACEHOLDER_REASONS = new Set(["provisional", "potential hidden gem"]);
+
+function hiddenGemReason(reason: string | null): string | undefined {
+  if (!reason) return undefined;
+  return PLACEHOLDER_REASONS.has(reason.trim().toLowerCase().replace(/\.$/, ""))
+    ? undefined
+    : reason;
+}
+
 type DestinationRow = Prisma.DestinationGetPayload<{ include: typeof withDetails }>;
 
 function toDestination(r: DestinationRow): Destination {
@@ -78,7 +93,7 @@ function toDestination(r: DestinationRow): Destination {
     budget: r.budget as BudgetLevel,
     budgetNote: r.budgetNote ?? undefined,
     hiddenGem: r.hiddenGem,
-    hiddenGemReason: r.hiddenGemReason ?? undefined,
+    hiddenGemReason: hiddenGemReason(r.hiddenGemReason),
     shortDescription: r.shortDescription,
     longDescription: r.longDescription ?? undefined,
     bestFor: r.bestFor ?? undefined,
@@ -235,4 +250,42 @@ export async function getAllPlaceParams(): Promise<{ slug: string }[]> {
     orderBy: { slug: "asc" },
   });
   return rows;
+}
+
+/** Every destination's id, name and district, for the blog editor's place picker. */
+export async function getDestinationOptions(): Promise<DestinationOption[]> {
+  return prisma.destination.findMany({
+    orderBy: [{ districtId: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, districtId: true },
+  });
+}
+
+/**
+ * One destination photo at random, with where it was taken — a backdrop for
+ * pages like sign-in. Null until any photos are uploaded.
+ */
+export async function getRandomPhoto(): Promise<{
+  url: string;
+  placeName: string;
+  districtId: string;
+  credit?: string;
+} | null> {
+  const count = await prisma.destinationImage.count();
+  if (count === 0) return null;
+  const image = await prisma.destinationImage.findFirst({
+    skip: Math.floor(Math.random() * count),
+    orderBy: { id: "asc" },
+    select: {
+      secureUrl: true,
+      credit: true,
+      destination: { select: { name: true, districtId: true, photoCredit: true } },
+    },
+  });
+  if (!image) return null;
+  return {
+    url: image.secureUrl,
+    placeName: image.destination.name,
+    districtId: image.destination.districtId,
+    credit: image.credit ?? image.destination.photoCredit ?? undefined,
+  };
 }
