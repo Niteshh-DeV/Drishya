@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GemIndex, type Gem } from "@/components/hidden-gems/GemIndex";
+import { RevealTitle } from "@/components/site/RevealTitle";
 import { getHiddenGems } from "@/lib/db/destinations";
 import { coverImageUrl } from "@/lib/images";
 
@@ -32,9 +33,10 @@ export default async function HiddenGemsPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
             Off the usual route
           </p>
-          <h1 className="font-display mt-5 text-[clamp(3.25rem,10vw,8rem)] font-medium uppercase leading-[0.85] tracking-[0.06em] text-ink">
-            Hidden Gems
-          </h1>
+          <RevealTitle
+            text="Hidden Gems"
+            className="font-display mt-5 text-[clamp(3.25rem,10vw,8rem)] font-medium uppercase leading-[0.85] tracking-[0.06em] text-ink"
+          />
           <div className="mx-auto mt-10 h-16 w-px bg-line" />
           <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
             Temples, caves, lakes and high meadows across Sudurpaschim that
