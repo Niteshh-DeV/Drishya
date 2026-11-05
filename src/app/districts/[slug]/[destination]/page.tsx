@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDistrict } from "@/data/districts";
 import { PlaceDetail } from "@/components/place/PlaceDetail";
 import { getPostsForDestination } from "@/lib/db/blog";
+import { coverImageUrl, shareImageUrl } from "@/lib/images";
 import {
   getAllDestinationParams,
   getDestination,
@@ -28,6 +29,11 @@ export async function generateMetadata({
   if (!destination) return { title: "Destination not found" };
 
   const canonicalUrl = `/districts/${district.slug}/${destination.slug}`;
+  // Places without a photo keep the site's default preview.
+  const cover = coverImageUrl(destination);
+  const images = cover
+    ? [{ url: shareImageUrl(cover), width: 1200, height: 630, alt: destination.name }]
+    : undefined;
   return {
     title: destination.name,
     description: destination.shortDescription,
@@ -37,11 +43,13 @@ export async function generateMetadata({
       description: destination.shortDescription,
       type: "article",
       url: canonicalUrl,
+      ...(images && { images }),
     },
     twitter: {
       card: "summary_large_image",
       title: destination.name,
       description: destination.shortDescription,
+      ...(images && { images }),
     },
   };
 }
