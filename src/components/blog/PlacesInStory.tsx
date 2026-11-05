@@ -2,9 +2,10 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { getDistrict } from "@/data/districts";
 import { cloudinaryUrl } from "@/lib/images";
-import { destinationHref } from "@/lib/site";
+import { destinationHref, placeCoverName } from "@/lib/site";
 import type { BlogPlaceLink } from "@/lib/types";
 
 // Leaflet touches `window`, so the map only loads in the browser.
@@ -39,13 +40,17 @@ export function PlacesInStory({ places }: { places: BlogPlaceLink[] }) {
           <li key={place.id}>
             <Link href={destinationHref(place)} className="group flex gap-5">
               {place.coverUrl ? (
-                <img
-                  src={cloudinaryUrl(place.coverUrl, 320)}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="h-24 w-24 shrink-0 object-cover"
-                />
+                <span className="card-media block h-24 w-24 shrink-0">
+                  <ViewTransition name={placeCoverName(place.id)} share="morph" default="none">
+                    <img
+                      src={cloudinaryUrl(place.coverUrl, 320)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
+                  </ViewTransition>
+                </span>
               ) : (
                 <span aria-hidden className="h-24 w-24 shrink-0 border border-line bg-stone/20" />
               )}
