@@ -20,6 +20,7 @@ Prefer changes that are small, reviewable, and consistent with what already exis
 - Tailwind CSS v4 — CSS-based config in `src/app/globals.css` (`@theme`), no `tailwind.config.js`
 - `motion` (Framer Motion) for animation
 - Leaflet 1.9 + react-leaflet 5 for geographic maps
+- Lenis for smooth wheel scrolling; React `<ViewTransition>` (built into Next 16's React canary) for page transitions
 - Prisma 7 + Neon (Postgres) for content data
 - Auth.js v5 (`next-auth@5` beta) with Google + Facebook sign-in, Prisma adapter, database sessions
 - Cloudinary for destination photos and blog uploads
@@ -61,12 +62,21 @@ src/
     blog/                    Index + [slug] post page (public, prerendered)
       write/, write/[id]/, mine/   Traveler editor + "My stories" (signed in)
     admin/posts/             Review queue (admin role only)
-    signin/, account/, privacy/    Auth.js sign-in, account deletion, privacy policy
-    guide-connect/, hidden-gems/   Placeholder shells
+    signin/, privacy/        Auth.js sign-in, privacy policy
+    account/                 Profile page (name, bio, story counts, deletion) + actions.ts
+    travelers/[id]/          Public traveler page (only once a story is published)
+    guide-connect/           Coming-soon page
+    hidden-gems/             Hidden gems grid
   components/
-    site/                    Header (floating "dock"), Footer, Logo, ThemeToggle, Reveal, PageTransition
+    site/                    Header (floating "dock"), AccountButton, Footer, Logo, ThemeToggle,
+                             PageTransition, SmoothScroll, Intro, Reveal, RevealTitle,
+                             ParallaxImage, Magnetic, PageSkeleton, useDismiss
+    account/                 ProfileForm
     hero-map/                HeroMap (scroll-driven SVG camera), DistrictNav (bottom ruler)
     district-map/            DistrictMap (react-leaflet), DistrictMapLoader (ssr:false wrapper)
+    region-map/              RegionMap: the /map explorer (district filter, place list)
+    map/                     Shared Leaflet parts: leaflet.ts (tiles, pins, bounds), PlaceMarkers,
+                             MapPlaceCard, MapGestures, usePlacePreview
   data/
     districts.ts             Source of truth for the 9 districts (ids, slugs, centers, blurbs)
     landmarks.ts             Starter landmark pins on the hero map
@@ -77,8 +87,9 @@ src/
     types.ts                 Shared types (District, Destination, Poi, …)
     pathBounds.ts, heroCamera.ts   Hero camera math
     db/                      Prisma client + data-access layer (destinations, blog,
-                             blog-authoring, blog-review, users)
+                             blog-authoring, blog-review, users, travelers)
     blog-input.ts            Post limits + validation shared by editor and server actions
+    profile-input.ts         Profile (name, bio) limits + validation
   auth.ts                    Auth.js config (providers, adapter, session callback)
   generated/prisma/          Generated Prisma client (gitignored)
 prisma/                      schema.prisma, seed.ts, migrations/
@@ -102,7 +113,9 @@ map-data/                    Source-of-truth map data archive
 - Leaflet touches `window`, so maps load through a `"use client"` wrapper using `dynamic(..., { ssr: false })`.
 - Read the Next.js docs in `node_modules/next/dist/docs/` before using any API you aren't sure about.
 
-**Map tiles.** Every Leaflet map uses `BASE_TILES` from `src/components/map/leaflet.ts` (key-less OpenStreetMap tiles); a `.leaflet-tile-pane` filter in globals.css mutes them to the palette. CARTO's basemaps now need an API key, so don't switch to them.
+**Map tiles.** Every Leaflet map uses `BASE_TILES` from `src/components/map/leaflet.ts` (key-less OpenStreetMap tiles); a `.leaflet-tile-pane` filter in globals.css mutes them to the palette. CARTO's basemaps now need an API key, so don't switch to them. Tiles overlap by a pixel and blend normally (overriding Leaflet's `plus-lighter`) to hide seams at fractional zoom.
+
+**Leaflet maps.** Every interactive map includes `<MapGestures />`: the wheel scrolls the page until the map is clicked, and on touch one finger scrolls the page and two move the map. Destination pins go through `PlaceMarkers` + `MapPlaceCard` (+ `usePlacePreview`): stable `placePin` icons (never rebuilt; state is `is-active`/`is-dim` classes), hover to preview on desktop, tap-to-preview then tap-to-open on phones, and the card docks along the bottom on narrow maps. District maps keep the view near the district (`minZoom`/`maxBounds`); Khaptad National Park is drawn on the four districts it reaches (`KHAPTAD_DISTRICTS`).
 
 **Display titles.** Huge uppercase place/district names take their size from `displayTitleSize()` (`src/lib/typography.ts`), so the longest word always fits on one line. Don't use `overflow-wrap:anywhere` on them; it splits words.
 
@@ -117,6 +130,7 @@ map-data/                    Source-of-truth map data archive
 - Publishing, unpublishing and deleting call `revalidatePath` for `/blog`, the post, and the district/destination pages showing "Stories from here".
 - **Never call `auth()` from a layout or a prerendered page** — it reads cookies and would make every route dynamic. The header reads the session client-side (`useSession`); only `/signin`, `/account`, `/blog/write*`, `/blog/mine` and `/admin/*` call `auth()`.
 - Roles (`traveler` | `guide` | `admin`) live on `User.role`. Sessions are in the database, so role changes apply on the next request. Grant admin in Prisma Studio.
+- Profiles: travelers edit their display name and `User.bio` on `/account`. `/travelers/[id]` (prerendered, `src/lib/db/travelers.ts`) exists only for users with a published story and shows name, photo, bio, join month and published stories — never email or unpublished work. Anything that changes a published post also revalidates `/travelers/<authorId>` (`PostPaths.authorId`); saving a profile revalidates the traveler page and their post pages ("About the author").
 - Posts without an author account (`byTeam`) are labelled "From the Drishya team"; never present them as traveler stories.
 - Post rendering is shared: `PostBody` (sections), `PostCard`/`Byline`/`RelatedStories`, `PlacesInStory` + `StoryMap` (Leaflet, client-only). The editor autosaves only drafts — autosaving a pending or published post would change its review status.
 - Traveler stories are personal accounts. Label them as such, and don't treat them as verified destination facts (including in the future RAG corpus).
@@ -144,8 +158,23 @@ Palette tokens are defined in `src/app/globals.css` under `@theme` and used as T
 - Surfaces: `glass`, `glass-strong`, `glass-card` utility classes (frosted panels). Display type: `font-display` (Cormorant Garamond).
 - Dark mode via `html[data-theme="dark"]` token overrides — use tokens, never hard-coded colors, so dark mode keeps working.
 - Pages that sit under the floating header pad with `pt-[calc(var(--header-h)+Xrem)]`.
-- Respect `prefers-reduced-motion` (existing components use `useReducedMotion`; keep that pattern).
+- Respect `prefers-reduced-motion`. In motion components, keep rendering the **same element tree** and only zero the durations/offsets (see `Reveal`, `ParallaxImage`): the server can't know the preference, and swapping in a plain element on the client leaves the server's `opacity: 0` in place.
+
+### Motion
+
+- **Scrolling:** Lenis (`SmoothScroll` in the root layout) eases wheel input; touch stays native. Read it with `useLenis()` from `lenis/react` and fall back to `window.scrollTo` when it's undefined. It never takes the wheel over `.leaflet-container`.
+- **Page transitions:** `PageTransition` wraps the page in a `<ViewTransition>` keyed by pathname (`.page-exit` / `.page-enter` in globals.css). The dock is its own named boundary held still on top (`.dock-hold`). Only navigations animate; don't add `ViewTransition`s with a non-`none` `default`/`update` elsewhere, or ordinary updates will start transitions.
+- **Shared photos:** a card photo and the cover it opens into share a name — `placeCoverName(id)` (`src/lib/site.ts`) for destinations, `postCoverName(id)` (`PostCard`) for stories — with `share="morph" default="none"`. A name may appear only once per page. Don't add `loading.tsx` to destination or story routes: a skeleton-first navigation can't morph.
+- **Titles:** page `h1`s use `RevealTitle` (pure CSS word reveal, waits for the intro on the first page of a visit). Below-the-fold blocks use `Reveal`; photos use `ParallaxImage` (curtain + drift; `reveal={false}` for morph targets).
+- **Theme switch:** `ThemeToggle` reveals the new theme as a circle from the button via `document.startViewTransition` (`[data-theme-switch]` in globals.css).
+- **Utilities in globals.css:** `card-media` / `card-arrow` (card hover inside a `group` link), `link-draw` (underline draws in), `ken-burns`, `drop-cap`, `skeleton`. The intro (`Intro`) is CSS-only and shows once per browser session.
 - Layout convention: `mx-auto max-w-6xl px-4`.
+
+### Pages and metadata
+
+- 404s and the error page use `NotFoundView` (`src/components/site/`), in the same editorial frame as content pages.
+- Link previews: pages with a photo set `openGraph.images` (and `twitter.images`) with `shareImageUrl()` from `src/lib/images.ts` (1200×630 JPEG crop). Everything else falls back to `src/app/opengraph-image.tsx`. A page-level `openGraph` object replaces the parent's, so include `images` whenever you set one.
+- Icons come from `brand/`: `src/app/icon.svg`, `src/app/apple-icon.png`, `public/icon-192.png` / `icon-512.png` (used by `manifest.ts`).
 
 ## Decisions already made (don't reopen unless asked)
 
@@ -153,7 +182,7 @@ Palette tokens are defined in `src/app/globals.css` under `@theme` and used as T
 - Postgres over NoSQL: the model is relational (districts → destinations → guides → blog posts).
 - The RAG assistant is deliberately the **last** phase — district content must exist before embeddings can be generated.
 - The recommendation engine (weighted scoring on budget, interests, season, distance) is core scope.
-- Hero camera and dock/header styling are finished and tuned; don't restructure them without being asked.
+- Hero camera and dock/header styling are finished and tuned; don't restructure them without being asked. The dock's behaviour (active-section pill, settling on scroll, tucking away on long pages, full-screen phone menu) was added on request and is tuned too.
 
 ## Working style
 
