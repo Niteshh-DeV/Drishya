@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { BASE_TILES, teardropPin } from "@/components/map/leaflet";
+import { MapGestures } from "@/components/map/MapGestures";
 
 const pin = teardropPin("var(--color-brass)", "story-map-pin");
 
@@ -32,6 +33,7 @@ export function StoryMap({ places }: { places: StoryMapPlace[] }) {
         className="h-full w-full"
       >
         <TileLayer {...BASE_TILES} />
+        <MapGestures />
         {places.map((place) => (
           <Marker key={place.id} position={place.position} icon={pin} title={place.name}>
             <Popup>
