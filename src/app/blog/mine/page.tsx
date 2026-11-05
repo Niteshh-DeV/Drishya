@@ -4,19 +4,12 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DeletePostButton } from "@/components/blog/DeletePostButton";
 import { formatPostDate } from "@/components/blog/PostCard";
+import { StatusBadge } from "@/components/blog/StatusBadge";
 import { getAuthorPosts } from "@/lib/db/blog-authoring";
-import type { BlogPostStatus } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "My stories",
   robots: { index: false },
-};
-
-const STATUS: Record<BlogPostStatus, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "border-line text-muted" },
-  pending: { label: "In review", className: "border-accent-ink text-accent-ink" },
-  published: { label: "Published", className: "border-ink bg-ink text-paper" },
-  rejected: { label: "Not approved", className: "border-line text-ink" },
 };
 
 export default async function MyPostsPage({
@@ -74,11 +67,7 @@ export default async function MyPostsPage({
         <ul className="mt-10 divide-y divide-line border-y border-line">
           {posts.map((post) => (
             <li key={post.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-5">
-              <span
-                className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${STATUS[post.status].className}`}
-              >
-                {STATUS[post.status].label}
-              </span>
+              <StatusBadge status={post.status} />
               <div className="min-w-0 flex-1">
                 <p className="font-display truncate text-xl text-ink">{post.title}</p>
                 <p className="text-xs text-muted">Updated {formatPostDate(post.updatedAt)}</p>
