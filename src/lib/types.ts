@@ -152,6 +152,8 @@ export interface BlogPostSummary {
   authorImage?: string;
   /** Written by the Drishya team (no traveler account behind it). */
   byTeam: boolean;
+  /** The author's account, for the link to their traveler page. Absent on team posts. */
+  authorId?: string;
   publishedAt: string;
   readingMinutes: number;
   districtIds: string[];
@@ -159,6 +161,8 @@ export interface BlogPostSummary {
 }
 
 export interface BlogPost extends BlogPostSummary {
+  /** The author's own bio, from their profile. */
+  authorBio?: string;
   sections: BlogPostSection[];
   destinations: BlogPlaceLink[];
 }
@@ -195,6 +199,30 @@ export interface AuthorPostSummary {
   updatedAt: string;
   /** The reviewer's note when a story was sent back or taken down. */
   reviewNote?: string;
+}
+
+/** The signed-in traveler's own profile, for the account page. */
+export interface AccountProfile {
+  id: string;
+  name?: string;
+  email?: string;
+  image?: string;
+  bio?: string;
+  role: UserRole;
+  joinedAt: string;
+}
+
+/**
+ * A traveler's public page. Only people with at least one published story
+ * have one; it never shows their email or unpublished work.
+ */
+export interface TravelerProfile {
+  id: string;
+  name: string;
+  image?: string;
+  bio?: string;
+  joinedAt: string;
+  posts: BlogPostSummary[];
 }
 
 /** A destination as offered in the writing form's place picker. */
