@@ -157,16 +157,20 @@ export function toMapPlaces(destinations: Destination[]): MapPlace[] {
   );
 }
 
-export async function getDestinationsForDistrict(
-  districtId: string,
-): Promise<Destination[]> {
-  const rows = await prisma.destination.findMany({
-    where: { districtId },
-    orderBy: { name: "asc" },
-    include: withDetails,
-  });
-  return rows.map(toDestination);
-}
+/**
+ * Cached per request: the district page reads it in `generateMetadata` (for
+ * the share image) and in the page body.
+ */
+export const getDestinationsForDistrict = cache(
+  async (districtId: string): Promise<Destination[]> => {
+    const rows = await prisma.destination.findMany({
+      where: { districtId },
+      orderBy: { name: "asc" },
+      include: withDetails,
+    });
+    return rows.map(toDestination);
+  },
+);
 
 /**
  * Cached per request: the destination page calls this from both
