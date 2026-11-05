@@ -100,14 +100,39 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Smooth programmatic scrolling (ruler clicks / arrow keys jump the camera). */
-html {
+/*
+ * Smooth programmatic scrolling (ruler clicks / arrow keys jump the camera)
+ * for when Lenis isn't running. Once it is, it adds `.lenis` to <html> and
+ * eases every scroll itself, so the native smoothing steps aside.
+ */
+html:not(.lenis) {
   scroll-behavior: smooth;
 }
 @media (prefers-reduced-motion: reduce) {
-  html {
+  html:not(.lenis) {
     scroll-behavior: auto;
   }
+}
+
+/* Lenis' required styles (from lenis/dist/lenis.css). */
+/* Selected text wears the brand brass. */
+::selection {
+  background: var(--color-brass);
+  color: var(--color-forest-deep);
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 /* Keep the Leaflet map below sticky UI (its panes default to high z-indexes). */
@@ -142,6 +167,22 @@ html[data-theme="dark"] .leaflet-tile {
     inset 0 -1px 0 0 color-mix(in srgb, var(--color-forest-deep) 70%, transparent),
     0 18px 40px -18px color-mix(in srgb, var(--color-forest-deep) 65%, transparent),
     0 4px 12px -6px color-mix(in srgb, var(--color-forest-deep) 40%, transparent);
+}
+
+/*
+ * Once the page has scrolled, the dock settles: a denser, more frosted pill,
+ * so body copy passing underneath doesn't fight the nav labels.
+ */
+.dock {
+  transition:
+    background-color 0.5s ease,
+    -webkit-backdrop-filter 0.5s ease,
+    backdrop-filter 0.5s ease;
+}
+.dock-scrolled {
+  background-color: color-mix(in srgb, var(--color-forest) 93%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  backdrop-filter: blur(28px) saturate(1.8);
 }
 
 /* Dock items rise a touch under the pointer, the way dock icons magnify. */
@@ -347,24 +388,17 @@ html[data-theme="dark"] .leaflet-tile {
   color: var(--color-place-ink);
 }
 
-.district-place-marker {
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-dock-text) 85%, transparent));
-  transition:
-    opacity 0.45s ease,
-    filter 0.45s ease;
-}
-
-.district-place-marker:hover {
-  filter:
-    drop-shadow(0 0 4px var(--color-dock-text))
-    drop-shadow(0 0 10px color-mix(in srgb, var(--color-brass) 65%, transparent));
-}
-
-@keyframes district-destination-enter {
+/*
+ * Destination pins on the Leaflet maps (`placePin` in components/map). The
+ * pin drops in once; hover or a list highlight lifts it (`is-active`), and
+ * a district filter fades the rest (`is-dim`). The lift is on an inner span
+ * because Leaflet positions the pin element itself with a transform.
+ */
+@keyframes place-pin-drop {
   0% {
     opacity: 0;
     transform: translateY(14px) scale(0.58);
-    filter: blur(3px) drop-shadow(0 0 0 transparent);
+    filter: blur(3px);
   }
   65% {
     opacity: 1;
@@ -372,47 +406,74 @@ html[data-theme="dark"] .leaflet-tile {
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0) drop-shadow(0 7px 8px color-mix(in srgb, var(--color-forest-deep) 25%, transparent));
+    transform: none;
+    filter: drop-shadow(0 7px 8px color-mix(in srgb, var(--color-forest-deep) 25%, transparent));
   }
 }
-
-.district-destination-pin svg {
-  animation: district-destination-enter 700ms cubic-bezier(0.16, 1, 0.3, 1)
-    var(--pin-delay, 0ms) both;
+.place-pin svg {
+  display: block;
+  animation: place-pin-drop 700ms var(--ease-out-expo) var(--pin-delay, 0ms) both;
   transform-origin: 50% 100%;
 }
-
-@keyframes district-marker-breathe {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 0.95;
-    transform: scale(1.22);
-  }
+.place-pin-body {
+  display: block;
+  transform-origin: 50% 100%;
+  transition:
+    transform 0.4s var(--ease-out-expo),
+    opacity 0.4s ease;
+}
+.place-pin.is-active .place-pin-body {
+  transform: translateY(-3px) scale(1.2);
+}
+.place-pin.is-dim .place-pin-body {
+  opacity: 0.28;
+}
+.place-pin:focus-visible {
+  outline: none;
+}
+.place-pin:focus-visible .place-pin-body {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 0.35rem var(--color-brass));
 }
 
-.leaflet-overlay-pane .district-place-marker {
-  animation: district-marker-breathe 2.4s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
+/* District names on the province map: a quiet label, not a browser tooltip. */
+.leaflet-tooltip.map-district-label {
+  border: 1px solid color-mix(in srgb, var(--color-stone) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-forest-deep) 88%, transparent);
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--color-forest-deep) 70%, transparent);
+  color: var(--color-dock-text);
+  padding: 0.3rem 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+.leaflet-tooltip.map-district-label::before {
+  display: none;
+}
+
+/*
+ * Tile seams. Fractional zoom (zoomSnap 0.25) scales the tile layer and
+ * leaves hairline gaps between tiles, so each tile overlaps the next by a
+ * pixel. Leaflet's own workaround blends tiles with `plus-lighter`, which
+ * would add the overlapping pixels into bright lines, so tiles blend
+ * normally instead.
+ */
+.leaflet-container img.leaflet-tile {
+  width: 257px !important;
+  height: 257px !important;
+  mix-blend-mode: normal !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .place-marker-pulse {
     animation: none;
   }
-
-  .district-place-marker {
+  .place-pin svg {
     animation: none;
-    transition: none;
   }
-
-  .district-destination-pin svg {
-    animation: none;
+  .place-pin-body {
+    transition: none;
   }
 }
 
@@ -427,4 +488,389 @@ html[data-theme="dark"] .leaflet-tile {
 
 html[data-theme="dark"] .leaflet-tile-pane {
   filter: saturate(0.4) sepia(0.1) brightness(0.82) contrast(0.95);
+}
+
+/*
+ * ── Motion system ─────────────────────────────────────────────────────────
+ * Two curves carry every animation on the site: a long ease-out for things
+ * arriving (they decelerate into place) and a symmetric ease for things that
+ * travel the whole way across, like the page curtain.
+ */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/*
+ * ── Page transitions ──────────────────────────────────────────────────────
+ * Route changes run as view transitions (see PageTransition). The old page
+ * drifts up and dissolves while the new one rises and wipes up from the
+ * bottom edge of the window, like a sheet drawn over it. The clip is in
+ * `vh` from the page's top, so it tracks the window however long the page
+ * is. Everything outside the page stays live underneath, and the dock is
+ * held still above both (`.dock-hold`).
+ */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(.page-exit) {
+  animation: page-exit 0.55s var(--ease-out-expo) both;
+}
+::view-transition-new(.page-enter) {
+  animation: page-enter 0.9s var(--ease-out-expo) 0.08s both;
+}
+@keyframes page-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-3vh) scale(0.985);
+    filter: blur(6px);
+  }
+}
+@keyframes page-enter {
+  from {
+    clip-path: inset(100vh 0 0 0);
+    transform: translateY(6vh);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+
+/* The dock: one fixed snapshot above the pages, no crossfade. */
+::view-transition-group(.dock-hold) {
+  z-index: 100;
+  animation: none;
+}
+::view-transition-old(.dock-hold) {
+  display: none;
+}
+::view-transition-new(.dock-hold) {
+  animation: none;
+}
+
+/*
+ * Shared photos: a destination or story photo that appears on both pages
+ * (card → cover) flies to its new place above the curtain. Both snapshots
+ * are cropped like `object-fit: cover`, so a square thumbnail opening into
+ * a wide cover doesn't stretch.
+ */
+::view-transition-group(.morph) {
+  z-index: 50;
+  animation-duration: 0.85s;
+  animation-timing-function: var(--ease-out-expo);
+}
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  overflow: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/*
+ * ── Photographs ───────────────────────────────────────────────────────────
+ * Cover photos settle in with a slow push-out (Ken Burns), as if the camera
+ * eases back from the scene.
+ */
+@keyframes ken-burns {
+  from {
+    transform: scale(1.14);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.ken-burns {
+  animation: ken-burns 3.2s var(--ease-out-expo) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ken-burns {
+    animation: none;
+  }
+}
+
+/*
+ * Cards: the photo zooms slowly and lifts on its shadow, the arrow slides
+ * forward. Put `group` on the link, `card-media` on the photo's frame and
+ * `card-arrow` on the arrow.
+ */
+.card-media {
+  overflow: hidden;
+  transition:
+    transform 0.8s var(--ease-out-expo),
+    box-shadow 0.8s var(--ease-out-expo);
+}
+.card-media img {
+  transition: transform 1.4s var(--ease-out-expo);
+}
+.group:hover .card-media,
+.group:focus-visible .card-media {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 50px -32px color-mix(in srgb, var(--color-forest-deep) 55%, transparent);
+}
+.group:hover .card-media img,
+.group:focus-visible .card-media img {
+  transform: scale(1.06);
+}
+.card-arrow {
+  display: inline-block;
+  transition: transform 0.5s var(--ease-out-expo);
+}
+.group:hover .card-arrow,
+.group:focus-visible .card-arrow {
+  transform: translateX(0.4rem);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-media,
+  .card-media img,
+  .card-arrow {
+    transition: none;
+  }
+  .group:hover .card-media,
+  .group:hover .card-media img,
+  .group:hover .card-arrow {
+    transform: none;
+  }
+}
+
+/*
+ * ── Type ──────────────────────────────────────────────────────────────────
+ * A serif drop cap for the opening paragraph of a place description.
+ */
+.drop-cap::first-letter {
+  float: left;
+  margin: 0.1em 0.12em 0 0;
+  font-family: var(--font-display);
+  font-size: 4.4em;
+  font-weight: 500;
+  line-height: 0.78;
+  color: var(--color-accent-ink);
+}
+
+/* Links whose underline draws in from the left on hover. */
+.link-draw {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition:
+    background-size 0.6s var(--ease-out-expo),
+    color 0.3s ease;
+}
+.link-draw:hover,
+.link-draw:focus-visible {
+  background-size: 100% 1px;
+}
+
+/*
+ * ── Paper grain ───────────────────────────────────────────────────────────
+ * A faint film of noise over the whole site, like printed stock. Mouse-
+ * driven screens only: on phones it's invisible at this strength and costs
+ * a full-screen layer.
+ */
+@media (hover: hover) and (pointer: fine) {
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  }
+  html[data-theme="dark"] body::after {
+    opacity: 0.035;
+  }
+}
+
+/*
+ * ── Intro ─────────────────────────────────────────────────────────────────
+ * The first page of a visit opens on the wordmark, then the forest panel
+ * lifts away. Pure CSS, so it can't get stuck if scripts fail; the inline
+ * script in layout.tsx marks later page loads in the session as seen.
+ */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  background: var(--color-forest-deep);
+  color: var(--color-dock-text);
+  animation: intro-lift 0.95s var(--ease-in-out-quart) 1.35s forwards;
+}
+.intro-letter {
+  display: inline-block;
+  animation: intro-letter 1s var(--ease-out-expo) both;
+  animation-delay: calc(0.12s + var(--i) * 0.055s);
+}
+.intro-rule {
+  transform-origin: 50% 50%;
+  animation: intro-rule 1.1s var(--ease-out-expo) 0.5s both;
+}
+@keyframes intro-letter {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes intro-rule {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes intro-lift {
+  to {
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+  }
+}
+html[data-intro="seen"] .intro {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}
+
+/*
+ * ── Loading ───────────────────────────────────────────────────────────────
+ * Skeleton blocks in the paper palette, with a slow sheen.
+ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-stone) 38%, transparent);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--color-paper) 70%, transparent) 50%,
+    transparent 80%
+  );
+  animation: skeleton-sheen 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-sheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/*
+ * The footer's giant wordmark, behind the footer text: brass light fading
+ * down into the forest, kept faint so the links over it stay easy to read.
+ */
+.footer-wordmark {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-brass-light) 22%, transparent) 0%,
+    color-mix(in srgb, var(--color-stone) 5%, transparent) 75%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/*
+ * Title reveal (RevealTitle): each word rises out of its own mask. The mask
+ * is padded past the line box and pulled back with negative margins, so
+ * tight display leading never clips ascenders or descenders. On the first
+ * page of a visit (`data-intro="playing"`) the words wait for the intro
+ * curtain to lift.
+ */
+.reveal-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding-block: 0.18em;
+  margin-block: -0.18em;
+  vertical-align: bottom;
+}
+.reveal-word {
+  display: inline-block;
+  animation: reveal-word 1.05s var(--ease-out-expo) both;
+  animation-delay: calc(0.12s + var(--i, 0) * 0.08s);
+}
+html[data-intro="playing"] .reveal-word {
+  animation-delay: calc(1.5s + var(--i, 0) * 0.08s);
+}
+@keyframes reveal-word {
+  from {
+    transform: translateY(110%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-word {
+    animation: none;
+  }
+}
+
+/* Leaflet popups (destination and story maps) in the site's palette. */
+.leaflet-container .leaflet-popup-content-wrapper {
+  border-radius: 1rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: 0 20px 45px -22px color-mix(in srgb, var(--color-forest-deep) 60%, transparent);
+}
+.leaflet-container .leaflet-popup-content {
+  margin: 0.7rem 1rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+.leaflet-container .leaflet-popup-content a {
+  color: var(--color-accent-ink);
+}
+.leaflet-container .leaflet-popup-tip {
+  background: var(--color-paper);
+}
+
+/*
+ * Theme switch (ThemeToggle): the new theme opens as a circle from the
+ * button. The body's colour fade is paused so the circle reveals the
+ * finished colours rather than a half-way blend.
+ */
+html[data-theme-switch] body {
+  transition: none;
+}
+html[data-theme-switch]::view-transition-old(root),
+html[data-theme-switch]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html[data-theme-switch]::view-transition-new(root) {
+  animation: theme-reveal 0.8s var(--ease-in-out-quart);
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-x, 100%) var(--theme-y, 0));
+  }
+  to {
+    clip-path: circle(150vmax at var(--theme-x, 100%) var(--theme-y, 0));
+  }
 }
