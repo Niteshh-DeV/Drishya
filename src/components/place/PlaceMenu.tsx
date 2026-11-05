@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 /**
- * Top bar and slide-out quick-reference menu for a place page. The only
- * stateful part of the page, so it is the only part that hydrates.
+ * Floating "Quick facts" button and its slide-out reference panel for a
+ * place page. Sits in the bottom-left corner so it doesn't compete with the
+ * site dock at the top. The only stateful part of the page, so it is the
+ * only part that hydrates.
  */
 export function PlaceMenu({
   districtName,
@@ -22,25 +23,22 @@ export function PlaceMenu({
 
   return (
     <>
-      <div className="place-topbar">
+      {items.length > 0 && (
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="destination-menu"
-          className="text-xs uppercase tracking-[0.22em] text-muted transition-colors hover:text-accent-ink"
+          className="glass-strong fixed bottom-5 left-5 z-40 rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink shadow-xl transition-colors hover:text-accent-ink sm:left-10"
         >
-          Menu {menuOpen ? "−" : "+"}
+          Quick facts {menuOpen ? "−" : "+"}
         </button>
-        <Link href="/map" className="text-xs uppercase tracking-[0.22em] text-ink">
-          Map
-        </Link>
-      </div>
+      )}
 
       {menuOpen && (
         <aside
           id="destination-menu"
-          className="fixed left-5 top-20 z-30 max-h-[calc(100vh-6rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto border border-line bg-paper/95 p-5 text-ink shadow-[0_24px_60px_-24px_color-mix(in_srgb,var(--color-forest-deep)_45%,transparent)] backdrop-blur-xl sm:left-10"
+          className="fixed bottom-20 left-5 z-40 max-h-[calc(100vh-var(--header-h)-7rem)] w-[min(22rem,calc(100vw-2.5rem))] overflow-y-auto border border-line bg-paper/95 p-5 text-ink shadow-[0_24px_60px_-24px_color-mix(in_srgb,var(--color-forest-deep)_45%,transparent)] backdrop-blur-xl sm:left-10"
         >
           <div className="flex items-start justify-between gap-5">
             <div>

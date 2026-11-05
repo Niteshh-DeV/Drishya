@@ -339,17 +339,6 @@ html[data-theme="dark"] .leaflet-tile {
   animation: place-marker-pulse 2.2s ease-in-out infinite;
 }
 
-.place-topbar {
-  position: fixed;
-  inset: 0 0 auto;
-  z-index: 40;
-  display: flex;
-  justify-content: space-between;
-  padding: 1.35rem clamp(1.25rem, 4vw, 4rem);
-  background: color-mix(in srgb, var(--color-paper) 88%, transparent);
-  backdrop-filter: blur(14px);
-}
-
 .bg-place-card {
   background: var(--color-place-card);
 }
