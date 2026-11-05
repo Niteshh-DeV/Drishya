@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { MouseEvent } from "react";
 import { usePathname } from "next/navigation";
+import { AccountButton } from "./AccountButton";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -105,6 +106,7 @@ export function Header() {
             </nav>
           </details>
           <ThemeToggle />
+          <AccountButton />
         </div>
       </header>
     </div>
