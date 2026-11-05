@@ -2,12 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { districts, getDistrict } from "@/data/districts";
+import { RelatedStories } from "@/components/blog/PostCard";
 import { DistrictMapLoader } from "@/components/district-map/DistrictMapLoader";
+import { getPostsForDistrict } from "@/lib/db/blog";
 import {
   getDestinationsForDistrict,
   toMapPlaces,
 } from "@/lib/db/destinations";
+import { cloudinaryUrl, coverImageUrl } from "@/lib/images";
 import { SITE_URL } from "@/lib/site";
+import { displayTitleSize } from "@/lib/typography";
 
 export const revalidate = 3600;
 
@@ -61,7 +65,10 @@ export default async function DistrictPage({
   const district = getDistrict(slug);
   if (!district) notFound();
 
-  const destinations = await getDestinationsForDistrict(district.id);
+  const [destinations, stories] = await Promise.all([
+    getDestinationsForDistrict(district.id),
+    getPostsForDistrict(district.id),
+  ]);
   const mapPlaces = toMapPlaces(destinations);
   const hiddenGemCount = destinations.filter(
     (destination) => destination.hiddenGem,
@@ -106,7 +113,40 @@ export default async function DistrictPage({
           ← Back to map
         </Link>
 
-        <section className="mx-auto mt-12 max-w-6xl">
+        <header className="mx-auto mt-12 max-w-5xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
+            {district.tagline}
+          </p>
+          <h1
+            className="font-display mt-5 font-medium uppercase leading-[0.82] tracking-[0.06em] text-ink"
+            style={{ fontSize: displayTitleSize(district.name, { maxRem: 10, containerRem: 64 }) }}
+          >
+            {district.name}
+          </h1>
+          <div className="mx-auto mt-12 h-20 w-px bg-line" />
+          <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
+            {district.blurb}
+          </p>
+        </header>
+
+        <dl className="mx-auto mt-16 grid max-w-5xl grid-cols-2 border-y border-line sm:grid-cols-4">
+          {[
+            ["Area", `${district.areaSqKm.toLocaleString()} km²`],
+            ["Destinations", destinations.length],
+            ["Hidden gems", hiddenGemCount],
+            ["On the map", mapPlaces.length],
+          ].map(([label, value], index) => (
+            <div
+              key={label}
+              className={`px-5 py-6 text-center ${index % 2 === 0 ? "border-r border-line" : ""} ${index < 2 ? "border-b border-line sm:border-b-0" : ""} sm:border-r sm:last:border-r-0`}
+            >
+              <dt className="text-[10px] uppercase tracking-[0.24em] text-muted">{label}</dt>
+              <dd className="font-display mt-2 text-3xl text-ink">{value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <section className="mx-auto mt-24 max-w-6xl">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Explore the region</p>
@@ -116,60 +156,8 @@ export default async function DistrictPage({
               {mapPlaces.length} mapped places
             </span>
           </div>
-        <DistrictMapLoader
-          district={district}
-          places={mapPlaces}
-        />
+          <DistrictMapLoader district={district} places={mapPlaces} />
         </section>
-
-        <header className="mx-auto mt-28 max-w-5xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
-            {district.tagline}
-          </p>
-          <h1 className="font-display mt-5 text-[clamp(4rem,13vw,10rem)] font-medium uppercase leading-[0.82] tracking-[0.06em] text-ink">
-            {district.name}
-          </h1>
-          <div className="mx-auto mt-12 h-20 w-px bg-line" />
-          <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
-            {district.blurb}
-          </p>
-        </header>
-
-        <dl className="mx-auto mt-16 grid max-w-5xl border-y border-line sm:grid-cols-3">
-          <div className="border-b border-line px-5 py-5 text-center sm:border-b-0 sm:border-r">
-            <dt className="text-[10px] uppercase tracking-[0.24em] text-muted">Area</dt>
-            <dd className="font-display mt-2 text-2xl text-ink">
-              {district.areaSqKm.toLocaleString()} km²
-            </dd>
-          </div>
-          <div className="border-b border-line px-5 py-5 text-center sm:border-b-0 sm:border-r">
-            <dt className="text-[10px] uppercase tracking-[0.24em] text-muted">Center</dt>
-            <dd className="mt-2 text-sm uppercase tracking-[0.12em] text-ink">
-              {district.center[0].toFixed(3)}, {district.center[1].toFixed(3)}
-            </dd>
-          </div>
-          <div className="px-5 py-5 text-center">
-            <dt className="text-[10px] uppercase tracking-[0.24em] text-muted">District code</dt>
-            <dd className="mt-2 text-sm uppercase tracking-[0.12em] text-ink">{district.pcode}</dd>
-          </div>
-        </dl>
-
-      <section className="mx-auto mt-20 grid max-w-6xl border-y border-line sm:grid-cols-3">
-        {[
-          ["Destinations", destinations.length],
-          ["Hidden gems", hiddenGemCount],
-          ["Mapped on map", mapPlaces.length],
-        ].map(([label, count]) => (
-          <div key={label} className="border-b border-line px-5 py-6 text-center last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted">
-              {label}
-            </h2>
-            <p className="font-display mt-2 text-4xl text-ink">
-              {count}
-            </p>
-          </div>
-        ))}
-      </section>
 
       <section className="mx-auto mt-28 max-w-6xl">
         <div className="flex items-end justify-between border-b border-line pb-5">
@@ -185,39 +173,59 @@ export default async function DistrictPage({
           </p>
         ) : (
           <div className="grid gap-x-12 md:grid-cols-2">
-            {destinations.map((destination, index) => (
-              <Link
-                key={destination.id}
-                href={`/districts/${district.slug}/${destination.slug}`}
-                className="group border-b border-line py-8 transition-colors hover:border-accent-ink"
-              >
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="font-display text-xl text-accent-ink">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  {destination.hiddenGem && (
-                    <span className="text-[10px] uppercase tracking-[0.18em] text-accent-ink">Hidden gem</span>
-                  )}
-                </div>
-                <h3 className="font-display mt-4 text-3xl text-ink transition-colors group-hover:text-accent-ink">
-                  {destination.name}
-                </h3>
-                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
-                  {destination.category.map((category) => (
-                    <span key={category} className="text-[10px] uppercase tracking-[0.16em] text-muted">
-                      {category}
+            {destinations.map((destination, index) => {
+              const cover = coverImageUrl(destination);
+              return (
+                <Link
+                  key={destination.id}
+                  href={`/districts/${district.slug}/${destination.slug}`}
+                  className="group flex gap-6 border-b border-line py-8 transition-colors hover:border-accent-ink"
+                >
+                  {cover ? (
+                    <img
+                      src={cloudinaryUrl(cover, 360)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="h-28 w-28 shrink-0 object-cover sm:h-32 sm:w-32"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden
+                      className="font-display grid h-28 w-28 shrink-0 place-items-center border border-line text-2xl text-accent-ink sm:h-32 sm:w-32"
+                    >
+                      {String(index + 1).padStart(2, "0")}
                     </span>
-                  ))}
-                </div>
-                <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">{destination.shortDescription}</p>
-                <p className="mt-5 text-xs uppercase tracking-[0.18em] text-accent-ink">
-                  Explore place · {destination.budget} →
-                </p>
-              </Link>
-            ))}
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      {destination.category.slice(0, 2).map((category) => (
+                        <span key={category} className="text-[10px] uppercase tracking-[0.16em] text-muted">
+                          {category}
+                        </span>
+                      ))}
+                      {destination.hiddenGem && (
+                        <span className="text-[10px] uppercase tracking-[0.18em] text-accent-ink">Hidden gem</span>
+                      )}
+                    </div>
+                    <h3 className="font-display mt-2 text-[1.75rem] leading-tight text-ink transition-colors group-hover:text-accent-ink">
+                      {destination.name}
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted">
+                      {destination.shortDescription}
+                    </p>
+                    <p className="mt-3 text-xs uppercase tracking-[0.18em] text-accent-ink">
+                      Explore place · {destination.budget} →
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>
+
+      <RelatedStories posts={stories} placeName={district.name} />
       </div>
     </main>
   );
