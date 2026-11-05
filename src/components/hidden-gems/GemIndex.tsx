@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, ViewTransition } from "react";
 import { Reveal } from "@/components/site/Reveal";
 import { districts } from "@/data/districts";
 import { cloudinaryUrl } from "@/lib/images";
-import { destinationHref } from "@/lib/site";
+import { destinationHref, placeCoverName } from "@/lib/site";
 
 /** What a hidden-gem card shows — kept slim so long descriptions stay on the server. */
 export interface Gem {
@@ -66,15 +66,17 @@ export function GemIndex({ gems }: { gems: Gem[] }) {
         {shown.map((gem, index) => (
           <Reveal key={gem.id} delay={(index % 3) * 0.06}>
             <Link href={destinationHref(gem)} className="group block">
-              <div className="overflow-hidden">
+              <div className="card-media">
                 {gem.coverUrl ? (
-                  <img
-                    src={cloudinaryUrl(gem.coverUrl, 900)}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="aspect-[4/3] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                  />
+                  <ViewTransition name={placeCoverName(gem.id)} share="morph" default="none">
+                    <img
+                      src={cloudinaryUrl(gem.coverUrl, 900)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  </ViewTransition>
                 ) : (
                   // No photo yet: a quiet panel with the name, never a stock image.
                   <div className="font-display grid aspect-[4/3] w-full place-items-center border border-line bg-stone/15 px-6 text-center text-2xl text-muted">
@@ -98,7 +100,9 @@ export function GemIndex({ gems }: { gems: Gem[] }) {
               <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted">
                 {gem.shortDescription}
               </p>
-              <p className="mt-4 text-xs uppercase tracking-[0.18em] text-accent-ink">Explore place →</p>
+              <p className="mt-4 text-xs uppercase tracking-[0.18em] text-accent-ink">
+                Explore place <span aria-hidden className="card-arrow">→</span>
+              </p>
             </Link>
           </Reveal>
         ))}
