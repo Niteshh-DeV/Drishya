@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDistrict } from "@/data/districts";
 import { PlaceDetail } from "@/components/place/PlaceDetail";
+import { getPostsForDestination } from "@/lib/db/blog";
 import {
   getAllDestinationParams,
   getDestination,
@@ -57,7 +58,10 @@ export default async function DestinationPage({
   const destination = await getDestination(district.id, destinationSlug);
   if (!destination) notFound();
 
-  const nextDestination = await getNextDestination(destination);
+  const [nextDestination, stories] = await Promise.all([
+    getNextDestination(destination),
+    getPostsForDestination(destination.id),
+  ]);
   const nextDistrict = nextDestination
     ? getDistrict(nextDestination.districtId)
     : undefined;
@@ -68,6 +72,7 @@ export default async function DestinationPage({
       district={district}
       nextPlace={nextDestination ?? undefined}
       nextDistrict={nextDistrict}
+      stories={stories}
     />
   );
 }
