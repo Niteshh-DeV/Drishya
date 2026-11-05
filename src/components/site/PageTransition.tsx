@@ -15,6 +15,9 @@ export function PageTransition({ children }: { children: ReactNode }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        // Fills the space between header and footer, so short pages keep
+        // the footer at the bottom of the window.
+        className="flex-1"
       >
         {children}
       </motion.div>
