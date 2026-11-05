@@ -11,7 +11,7 @@ import type { District, MapPlace } from "@/lib/types";
 const DistrictMap = dynamic(() => import("./DistrictMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[65vh] min-h-[420px] w-full items-center justify-center rounded-xl border border-line bg-paper/50 text-sm text-muted">
+    <div className="skeleton grid h-[65vh] min-h-[420px] w-full place-items-center rounded-2xl border border-line text-xs uppercase tracking-[0.2em] text-muted">
       Loading map…
     </div>
   ),

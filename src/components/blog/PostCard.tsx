@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { getDistrict } from "@/data/districts";
 import { cloudinaryUrl } from "@/lib/images";
 import type { BlogPostSummary } from "@/lib/types";
@@ -24,6 +25,15 @@ export function postMeta(post: BlogPostSummary): string {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+/**
+ * View-transition name shared by a story's card photo and its cover on the
+ * post page, so one flies into the other. Each name may appear only once
+ * per page.
+ */
+export function postCoverName(postId: string): string {
+  return `post-cover-${postId}`;
 }
 
 /** Traveler stories are personal accounts; team posts are labelled as ours. */
@@ -65,13 +75,25 @@ export function AuthorAvatar({
   );
 }
 
-/** Avatar, name and label, e.g. under a post title. */
-export function Byline({ post }: { post: BlogPostSummary }) {
+/**
+ * Avatar, name and label, e.g. under a post title. With `link`, a
+ * traveler's name opens their traveler page; leave it off inside a card
+ * that is already one big link.
+ */
+export function Byline({ post, link = false }: { post: BlogPostSummary; link?: boolean }) {
   return (
     <div className="flex items-center gap-3 text-left">
       <AuthorAvatar post={post} />
       <div className="leading-tight">
-        <p className="text-sm font-medium text-ink">{post.authorName}</p>
+        <p className="text-sm font-medium text-ink">
+          {link && post.authorId ? (
+            <Link href={`/travelers/${post.authorId}`} className="link-draw hover:text-accent-ink">
+              {post.authorName}
+            </Link>
+          ) : (
+            post.authorName
+          )}
+        </p>
         <p className="text-[10px] uppercase tracking-[0.18em] text-accent-ink">
           {bylineLabel(post)}
         </p>
@@ -86,21 +108,24 @@ export function Byline({ post }: { post: BlogPostSummary }) {
  */
 export function PostCard({ post }: { post: BlogPostSummary }) {
   return (
-    <Link href={`/blog/${post.slug}`} className="group block border-t border-line pt-5">
+    <Link href={`/blog/${post.slug}`} className="group block border-t border-line pt-5 outline-none">
       {post.coverUrl && (
-        <div className="mb-5 overflow-hidden">
-          <img
-            src={cloudinaryUrl(post.coverUrl, 900)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="aspect-[4/3] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-          />
+        <div className="card-media mb-5">
+          {/* Opens into the post page's cover (see PostCover). */}
+          <ViewTransition name={postCoverName(post.id)} share="morph" default="none">
+            <img
+              src={cloudinaryUrl(post.coverUrl, 900)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="aspect-[4/3] w-full object-cover"
+            />
+          </ViewTransition>
         </div>
       )}
       <p className="text-[10px] uppercase tracking-[0.2em] text-muted">{postMeta(post)}</p>
       <h3 className="font-display mt-3 text-[1.75rem] leading-[1.1] text-ink transition-colors group-hover:text-accent-ink">
-        {post.title}
+        {post.title} <span aria-hidden className="card-arrow text-xl text-accent-ink">→</span>
       </h3>
       <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted">{post.excerpt}</p>
       <div className="mt-5 flex items-center gap-2.5">

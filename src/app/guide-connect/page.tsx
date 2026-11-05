@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Magnetic } from "@/components/site/Magnetic";
+import { RevealTitle } from "@/components/site/RevealTitle";
 
 export const metadata: Metadata = {
   title: "Guide Connect",
@@ -32,9 +34,10 @@ export default function GuideConnectPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
             Coming soon
           </p>
-          <h1 className="font-display mt-5 text-[clamp(3rem,9vw,7.5rem)] font-medium uppercase leading-[0.88] tracking-[0.06em] text-ink">
-            Guide Connect
-          </h1>
+          <RevealTitle
+            text="Guide Connect"
+            className="font-display mt-5 text-[clamp(3rem,9vw,7.5rem)] font-medium uppercase leading-[0.88] tracking-[0.06em] text-ink"
+          />
           <div className="mx-auto mt-10 h-16 w-px bg-line" />
           <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
             Much of Sudurpaschim is best reached with someone local — the
@@ -62,18 +65,22 @@ export default function GuideConnectPage() {
             safety notes, and travelers share their own routes in Field Notes.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/map"
-              className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-opacity hover:opacity-90"
-            >
-              Explore the map
-            </Link>
-            <Link
-              href="/blog"
-              className="rounded-full border border-line px-6 py-3 text-sm font-medium text-ink transition-colors hover:border-accent-ink hover:text-accent-ink"
-            >
-              Read Field Notes
-            </Link>
+            <Magnetic>
+              <Link
+                href="/map"
+                className="inline-block rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-opacity hover:opacity-90"
+              >
+                Explore the map
+              </Link>
+            </Magnetic>
+            <Magnetic>
+              <Link
+                href="/blog"
+                className="inline-block rounded-full border border-line px-6 py-3 text-sm font-medium text-ink transition-colors hover:border-accent-ink hover:text-accent-ink"
+              >
+                Read Field Notes
+              </Link>
+            </Magnetic>
           </div>
         </section>
       </div>

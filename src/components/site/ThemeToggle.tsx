@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
+import { flushSync } from "react-dom";
 
 const STORAGE_KEY = "drishya-theme";
 
@@ -11,15 +12,35 @@ export function ThemeToggle() {
     setDark(document.documentElement.dataset.theme === "dark");
   }, []);
 
-  function toggleTheme() {
+  /**
+   * The new theme spreads out in a circle from the button (a view
+   * transition on the whole page; `[data-theme-switch]` in globals.css).
+   * Browsers without view transitions, and reduced motion, swap at once.
+   */
+  function toggleTheme(event: MouseEvent<HTMLButtonElement>) {
     const nextDark = !dark;
-    document.documentElement.dataset.theme = nextDark ? "dark" : "light";
-    setDark(nextDark);
+    const root = document.documentElement;
+    const apply = () => {
+      root.dataset.theme = nextDark ? "dark" : "light";
+      flushSync(() => setDark(nextDark));
+    };
     try {
       localStorage.setItem(STORAGE_KEY, nextDark ? "dark" : "light");
     } catch {
       // Keep the in-page toggle working when browser storage is unavailable.
     }
+
+    if (!document.startViewTransition || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      apply();
+      return;
+    }
+    const box = event.currentTarget.getBoundingClientRect();
+    root.style.setProperty("--theme-x", `${box.left + box.width / 2}px`);
+    root.style.setProperty("--theme-y", `${box.top + box.height / 2}px`);
+    root.dataset.themeSwitch = "";
+    document.startViewTransition(apply).finished.finally(() => {
+      delete root.dataset.themeSwitch;
+    });
   }
 
   return (

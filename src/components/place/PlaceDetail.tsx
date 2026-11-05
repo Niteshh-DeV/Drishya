@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { RelatedStories } from "@/components/blog/PostCard";
+import { ReadingProgress } from "@/components/blog/ReadingProgress";
+import { ParallaxImage } from "@/components/site/ParallaxImage";
 import { Reveal } from "@/components/site/Reveal";
+import { RevealTitle } from "@/components/site/RevealTitle";
 import { cloudinaryUrl, coverImageUrl } from "@/lib/images";
 import { displayTitleSize } from "@/lib/typography";
 import type {
@@ -36,12 +39,10 @@ function EditorialImage({
   index: number;
 }) {
   return (
-    <img
+    <ParallaxImage
       src={cloudinaryUrl(photo.secureUrl, 1600)}
       alt={`${destination.name} view ${index + 2}`}
-      loading="lazy"
-      decoding="async"
-      className="h-[min(58vh,34rem)] w-full object-cover"
+      className="h-[min(58vh,34rem)] w-full"
     />
   );
 }
@@ -97,6 +98,7 @@ export function PlaceDetail({
 
   return (
     <main className="place-page min-h-screen bg-paper text-ink">
+      <ReadingProgress />
       <PlaceMenu
         districtName={district.name}
         placeName={destination.name}
@@ -108,12 +110,11 @@ export function PlaceDetail({
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
             {district.name}
           </p>
-          <h1
+          <RevealTitle
+            text={destination.name}
             className="font-display mt-5 max-w-full text-balance break-words font-medium uppercase leading-[0.88] tracking-[0.06em] text-ink"
             style={{ fontSize: displayTitleSize(destination.name, { maxRem: 9.5, containerRem: 64 }) }}
-          >
-            {destination.name}
-          </h1>
+          />
           {destination.nameNepali && (
             <p className="mt-4 text-lg text-muted">{destination.nameNepali}</p>
           )}
@@ -141,6 +142,23 @@ export function PlaceDetail({
           )}
         </RevealSection>
 
+        {/* Not wrapped in a reveal: a card photo morphs into this frame on
+            arrival, so it has to be on screen from the first frame. */}
+        {image && (
+          <figure className="mx-[calc(50%-50vw)] mt-20">
+            <PlaceCoverImage
+              destinationId={destination.id}
+              src={cloudinaryUrl(image, 2000)}
+              alt={destination.name}
+            />
+            {destination.photoCredit && (
+              <figcaption className="mx-5 mt-3 text-right text-[10px] uppercase tracking-[0.16em] text-muted sm:mx-10 lg:mx-16">
+                {destination.photoCredit}
+              </figcaption>
+            )}
+          </figure>
+        )}
+
         <div id="destination-details">
         <RevealSection
           className="mx-auto mt-32 max-w-6xl"
@@ -163,10 +181,13 @@ export function PlaceDetail({
                 </p>
               </div>
             )}
-            <div className="space-y-6 text-base leading-[1.9] text-muted sm:text-lg">
+            <div className="space-y-7 text-[1.0625rem] leading-[1.9] text-ink/80 sm:text-[1.1875rem]">
               {paragraphs.map((paragraph, index) => (
                 <RevealSection key={`${paragraph.slice(0, 20)}-${index}`} delay={index * 0.15}>
-                  <p>{paragraph}</p>
+                  {/* A drop cap needs a few lines to sit in; skip it on a one-liner. */}
+                  <p className={index === 0 && paragraph.length > 180 ? "drop-cap" : undefined}>
+                    {paragraph}
+                  </p>
                 </RevealSection>
               ))}
             </div>
@@ -188,21 +209,6 @@ export function PlaceDetail({
                 </div>
               ))}
             </div>
-          </RevealSection>
-        )}
-
-        {image && (
-          <RevealSection className="mx-[calc(50%-50vw)] mt-28" delay={0.15}>
-            <PlaceCoverImage
-              slug={destination.slug}
-              src={cloudinaryUrl(image, 2000)}
-              alt={destination.name}
-            />
-            {destination.photoCredit && (
-              <p className="mt-3 text-right text-[10px] uppercase tracking-[0.16em] text-muted">
-                {destination.photoCredit}
-              </p>
-            )}
           </RevealSection>
         )}
 
@@ -347,19 +353,19 @@ export function PlaceDetail({
         <RelatedStories posts={stories} placeName={destination.name} />
 
         <RevealSection className="mx-auto mt-36 flex max-w-5xl flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-end sm:justify-between" delay={0.15}>
-          <Link href="/map" className="text-sm uppercase tracking-[0.2em] text-muted hover:text-accent-ink">
+          <Link href="/map" className="link-draw self-start pb-0.5 text-sm uppercase tracking-[0.2em] text-muted hover:text-accent-ink">
             ← Back to map
           </Link>
           {nextPlace && nextDistrict && (
             <Link
               href={`/districts/${nextDistrict.slug}/${nextPlace.slug}`}
-              className="text-right"
+              className="group text-right"
             >
               <span className="block text-[10px] uppercase tracking-[0.22em] text-muted">
                 Next place · {nextDistrict.name}
               </span>
-              <span className="font-display mt-1 block text-3xl text-ink hover:text-accent-ink">
-                {nextPlace.name} →
+              <span className="font-display mt-1 block text-3xl text-ink transition-colors group-hover:text-accent-ink">
+                {nextPlace.name} <span aria-hidden className="card-arrow">→</span>
               </span>
             </Link>
           )}

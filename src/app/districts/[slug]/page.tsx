@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ViewTransition } from "react";
 import type { Metadata } from "next";
 import { districts, getDistrict } from "@/data/districts";
 import { RelatedStories } from "@/components/blog/PostCard";
+import { RevealTitle } from "@/components/site/RevealTitle";
 import { DistrictMapLoader } from "@/components/district-map/DistrictMapLoader";
 import { getPostsForDistrict } from "@/lib/db/blog";
 import {
   getDestinationsForDistrict,
   toMapPlaces,
 } from "@/lib/db/destinations";
-import { cloudinaryUrl, coverImageUrl } from "@/lib/images";
-import { SITE_URL } from "@/lib/site";
+import { cloudinaryUrl, coverImageUrl, shareImageUrl } from "@/lib/images";
+import { SITE_URL, placeCoverName } from "@/lib/site";
 import { displayTitleSize } from "@/lib/typography";
 
 export const revalidate = 3600;
@@ -35,6 +37,12 @@ export async function generateMetadata({
   }
 
   const canonicalUrl = `/districts/${district.slug}`;
+  // The first photographed destination stands in for the district.
+  const destinations = await getDestinationsForDistrict(district.id);
+  const cover = destinations.map(coverImageUrl).find(Boolean);
+  const images = cover
+    ? [{ url: shareImageUrl(cover), width: 1200, height: 630, alt: district.name }]
+    : undefined;
 
   return {
     title: `${district.name} Travel Guide`,
@@ -47,11 +55,13 @@ export async function generateMetadata({
       description: district.blurb,
       type: "website",
       url: canonicalUrl,
+      ...(images && { images }),
     },
     twitter: {
       card: "summary_large_image",
       title: `${district.name} Travel Guide`,
       description: district.blurb,
+      ...(images && { images }),
     },
   };
 }
@@ -108,7 +118,7 @@ export default async function DistrictPage({
       <div className="mx-auto max-w-360 px-5 pb-24 pt-[calc(var(--header-h)+3rem)] sm:px-10 lg:px-16">
         <Link
           href="/"
-          className="text-xs uppercase tracking-[0.22em] text-muted transition-colors hover:text-accent-ink"
+          className="link-draw pb-0.5 text-xs uppercase tracking-[0.22em] text-muted transition-colors hover:text-accent-ink"
         >
           ← Back to map
         </Link>
@@ -117,12 +127,11 @@ export default async function DistrictPage({
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
             {district.tagline}
           </p>
-          <h1
+          <RevealTitle
+            text={district.name}
             className="font-display mt-5 font-medium uppercase leading-[0.82] tracking-[0.06em] text-ink"
             style={{ fontSize: displayTitleSize(district.name, { maxRem: 10, containerRem: 64 }) }}
-          >
-            {district.name}
-          </h1>
+          />
           <div className="mx-auto mt-12 h-20 w-px bg-line" />
           <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
             {district.blurb}
@@ -182,13 +191,18 @@ export default async function DistrictPage({
                   className="group flex gap-6 border-b border-line py-8 transition-colors hover:border-accent-ink"
                 >
                   {cover ? (
-                    <img
-                      src={cloudinaryUrl(cover, 360)}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      className="h-28 w-28 shrink-0 object-cover sm:h-32 sm:w-32"
-                    />
+                    <span className="card-media block h-28 w-28 shrink-0 sm:h-32 sm:w-32">
+                      {/* Flies up into the destination page's cover. */}
+                      <ViewTransition name={placeCoverName(destination.id)} share="morph" default="none">
+                        <img
+                          src={cloudinaryUrl(cover, 360)}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover"
+                        />
+                      </ViewTransition>
+                    </span>
                   ) : (
                     <span
                       aria-hidden
@@ -215,7 +229,7 @@ export default async function DistrictPage({
                       {destination.shortDescription}
                     </p>
                     <p className="mt-3 text-xs uppercase tracking-[0.18em] text-accent-ink">
-                      Explore place · {destination.budget} →
+                      Explore place · {destination.budget} <span aria-hidden className="card-arrow">→</span>
                     </p>
                   </div>
                 </Link>

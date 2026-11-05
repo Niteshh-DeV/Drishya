@@ -45,6 +45,7 @@ function refreshPublicPages(paths: PostPaths) {
   revalidatePath(`/blog/${paths.slug}`);
   for (const path of paths.destinationPaths) revalidatePath(path);
   for (const id of paths.districtIds) revalidatePath(`/districts/${id}`);
+  if (paths.authorId) revalidatePath(`/travelers/${paths.authorId}`);
 }
 
 /**

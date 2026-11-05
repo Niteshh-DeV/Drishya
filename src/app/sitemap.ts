@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { districts } from "@/data/districts";
 import { getPostSitemapEntries } from "@/lib/db/blog";
 import { getAllDestinationParams } from "@/lib/db/destinations";
+import { getTravelerParams } from "@/lib/db/travelers";
 import { SITE_URL } from "@/lib/site";
 
 // Rebuilt hourly, like the pages it lists, so newly published stories appear.
@@ -19,9 +20,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  const [destinations, posts] = await Promise.all([
+  const [destinations, posts, travelers] = await Promise.all([
     getAllDestinationParams(),
     getPostSitemapEntries(),
+    getTravelerParams(),
   ]);
 
   const destinationRoutes = destinations.map((d) => ({
@@ -34,5 +36,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: post.updatedAt,
   }));
 
-  return [...staticRoutes, ...districtRoutes, ...destinationRoutes, ...postRoutes];
+  const travelerRoutes = travelers.map((t) => ({
+    url: url(`/travelers/${t.id}`),
+    lastModified: new Date(),
+  }));
+
+  return [...staticRoutes, ...districtRoutes, ...destinationRoutes, ...postRoutes, ...travelerRoutes];
 }

@@ -20,6 +20,20 @@ export interface PostPaths {
   wasPublished: boolean;
   destinationPaths: string[];
   districtIds: string[];
+  /** The author's account, whose traveler page lists the post. Null for team posts. */
+  authorId: string | null;
+}
+
+/** How many of the author's posts are in each status. */
+export async function countAuthorPosts(userId: string): Promise<Record<BlogPostStatus, number>> {
+  const rows = await prisma.blogPost.groupBy({
+    by: ["status"],
+    where: { authorId: userId },
+    _count: { _all: true },
+  });
+  const counts: Record<BlogPostStatus, number> = { draft: 0, pending: 0, published: 0, rejected: 0 };
+  for (const row of rows) counts[row.status] = row._count._all;
+  return counts;
 }
 
 export async function getAuthorPosts(userId: string): Promise<AuthorPostSummary[]> {
@@ -137,6 +151,7 @@ async function currentPaths(id: string, userId: string): Promise<PostPaths | nul
     select: {
       slug: true,
       status: true,
+      authorId: true,
       destinations: { select: { destination: { select: { slug: true, districtId: true } } } },
       districts: { select: { districtId: true } },
     },
@@ -149,6 +164,7 @@ async function currentPaths(id: string, userId: string): Promise<PostPaths | nul
       ({ destination }) => `/districts/${destination.districtId}/${destination.slug}`,
     ),
     districtIds: r.districts.map((d) => d.districtId),
+    authorId: r.authorId,
   };
 }
 

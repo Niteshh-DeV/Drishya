@@ -8,7 +8,7 @@ const RegionMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-[min(72vh,52rem)] min-h-[34rem] animate-pulse rounded-3xl border border-line bg-stone/30" />
+      <div className="skeleton h-[58vh] min-h-[24rem] rounded-3xl border border-line sm:h-[min(78vh,52rem)] sm:min-h-[30rem]" />
     ),
   },
 );

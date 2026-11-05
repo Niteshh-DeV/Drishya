@@ -305,6 +305,8 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  /// A few lines about the traveler, shown on their public page and under their stories.
+  bio           String?
   role          UserRole  @default(traveler)
 
   accounts  Account[]

@@ -20,6 +20,7 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
+import { useLenis } from "lenis/react";
 import svgJson from "@/data/sudurpaschim-svg.json";
 import { districts } from "@/data/districts";
 import { framedViewBox, pathBounds, unionBounds, type Bounds } from "@/lib/pathBounds";
@@ -171,7 +172,10 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
     damping: 36,
     restDelta: 0.0005,
   });
-  const camP = reduced ? scrollYProgress : sprung;
+  // Lenis already eases wheel input into a smooth glide; springing that
+  // again would only add lag, so the camera tracks scroll directly.
+  const lenis = useLenis();
+  const camP = reduced || lenis ? scrollYProgress : sprung;
 
   const initial = stops[0];
   const vx = useMotionValue(initial[0]);
@@ -278,12 +282,14 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
       const top = el.getBoundingClientRect().top + window.scrollY;
       const range = el.offsetHeight - window.innerHeight;
       const target = top + (clamp(k, 0, districts.length) / districts.length) * range;
-      window.scrollTo({
-        top: target,
-        behavior: reduced ? "auto" : "smooth",
-      });
+      if (lenis) lenis.scrollTo(target, { duration: 1.4 });
+      else
+        window.scrollTo({
+          top: target,
+          behavior: reduced ? "auto" : "smooth",
+        });
     },
-    [reduced],
+    [reduced, lenis],
   );
 
   const goActive = () => {

@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, ViewTransition } from "react";
 import { Reveal } from "@/components/site/Reveal";
 import { districts } from "@/data/districts";
 import { cloudinaryUrl } from "@/lib/images";
 import type { BlogPostSummary } from "@/lib/types";
-import { Byline, PostCard, postMeta } from "./PostCard";
+import { Byline, PostCard, postCoverName, postMeta } from "./PostCard";
 
 /**
  * The blog index body: the newest story as a full-width feature, then the
@@ -31,12 +31,14 @@ export function StoryIndex({ posts }: { posts: BlogPostSummary[] }) {
           <Link href={`/blog/${featured.slug}`} className="group block">
             {featured.coverUrl && (
               <div className="mx-[calc(50%-50vw)] overflow-hidden">
-                <img
-                  src={cloudinaryUrl(featured.coverUrl, 2000)}
-                  alt=""
-                  decoding="async"
-                  className="h-[min(68vh,44rem)] w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                />
+                <ViewTransition name={postCoverName(featured.id)} share="morph" default="none">
+                  <img
+                    src={cloudinaryUrl(featured.coverUrl, 2000)}
+                    alt=""
+                    decoding="async"
+                    className="h-[min(68vh,44rem)] w-full object-cover transition-transform duration-[1.6s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                  />
+                </ViewTransition>
               </div>
             )}
             <div className="mx-auto mt-10 grid max-w-6xl gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-end">
@@ -53,7 +55,7 @@ export function StoryIndex({ posts }: { posts: BlogPostSummary[] }) {
                 <div className="flex items-center justify-between gap-4">
                   <Byline post={featured} />
                   <span className="text-xs uppercase tracking-[0.18em] text-accent-ink">
-                    Read story →
+                    Read story <span aria-hidden className="card-arrow">→</span>
                   </span>
                 </div>
               </div>

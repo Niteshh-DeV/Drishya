@@ -79,6 +79,7 @@ async function pathsFor(id: string): Promise<PostPaths | null> {
     select: {
       slug: true,
       status: true,
+      authorId: true,
       destinations: { select: { destination: { select: { slug: true, districtId: true } } } },
       districts: { select: { districtId: true } },
     },
@@ -91,6 +92,7 @@ async function pathsFor(id: string): Promise<PostPaths | null> {
       ({ destination }) => `/districts/${destination.districtId}/${destination.slug}`,
     ),
     districtIds: r.districts.map((d) => d.districtId),
+    authorId: r.authorId,
   };
 }
 

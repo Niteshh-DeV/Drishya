@@ -45,6 +45,18 @@ export default function PrivacyPage() {
             publishes them; published stories show the name you chose as the
             byline.
           </p>
+          <p className="mt-3">
+            Once one of your stories is published, you also get a public
+            traveler page. It shows your display name, profile photo, the bio
+            you wrote (if any), the month you joined and your published
+            stories, and each published story shows your bio under it. Your
+            email address and unpublished stories are never shown. You can
+            change your name and bio on{" "}
+            <Link href="/account" className="underline hover:text-accent-ink">
+              your account page
+            </Link>
+            .
+          </p>
         </section>
 
         <section id="delete">

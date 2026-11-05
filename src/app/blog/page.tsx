@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { StoryIndex } from "@/components/blog/StoryIndex";
+import { Magnetic } from "@/components/site/Magnetic";
+import { RevealTitle } from "@/components/site/RevealTitle";
 import { getPublishedPosts } from "@/lib/db/blog";
 
 export const revalidate = 3600;
@@ -22,21 +24,24 @@ export default async function BlogIndexPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent-ink">
             Stories from Sudurpaschim
           </p>
-          <h1 className="font-display mt-5 text-[clamp(3.5rem,11vw,8.5rem)] font-medium uppercase leading-[0.85] tracking-[0.06em] text-ink">
-            Field Notes
-          </h1>
+          <RevealTitle
+            text="Field Notes"
+            className="font-display mt-5 text-[clamp(3.5rem,11vw,8.5rem)] font-medium uppercase leading-[0.85] tracking-[0.06em] text-ink"
+          />
           <div className="mx-auto mt-10 h-16 w-px bg-line" />
           <p className="mx-auto mt-8 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
             Trails, festivals and quiet corners of the far west, written by the
             people who went there. Every story is read by our team before it
             is published.
           </p>
-          <Link
-            href="/blog/write"
-            className="mt-8 inline-block rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-opacity hover:opacity-90"
-          >
-            Share your story
-          </Link>
+          <Magnetic className="mt-8 inline-block">
+            <Link
+              href="/blog/write"
+              className="inline-block rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-opacity hover:opacity-90"
+            >
+              Share your story
+            </Link>
+          </Magnetic>
         </header>
 
         {posts.length === 0 ? (
