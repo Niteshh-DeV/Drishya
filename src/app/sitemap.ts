@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { districts } from "@/data/districts";
 import { getPostSitemapEntries } from "@/lib/db/blog";
 import { getAllDestinationParams } from "@/lib/db/destinations";
+import { getGuideParams } from "@/lib/db/guides";
 import { getTravelerParams } from "@/lib/db/travelers";
 import { SITE_URL } from "@/lib/site";
 
@@ -20,10 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  const [destinations, posts, travelers] = await Promise.all([
+  const [destinations, posts, travelers, guides] = await Promise.all([
     getAllDestinationParams(),
     getPostSitemapEntries(),
     getTravelerParams(),
+    getGuideParams(),
   ]);
 
   const destinationRoutes = destinations.map((d) => ({
@@ -41,5 +43,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  return [...staticRoutes, ...districtRoutes, ...destinationRoutes, ...postRoutes, ...travelerRoutes];
+  const guideRoutes = guides.map((g) => ({
+    url: url(`/guide-connect/${g.id}`),
+    lastModified: new Date(),
+  }));
+
+  return [
+    ...staticRoutes,
+    ...districtRoutes,
+    ...destinationRoutes,
+    ...postRoutes,
+    ...travelerRoutes,
+    ...guideRoutes,
+  ];
 }
