@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { countAuthorPosts } from "@/lib/db/blog-authoring";
 import { getPublishedPostSlugsByAuthor } from "@/lib/db/blog";
 import { countPendingPosts } from "@/lib/db/blog-review";
+import { getOwnGuideStatus } from "@/lib/db/guide-authoring";
+import { countPendingGuides } from "@/lib/db/guide-review";
 import { updateProfile } from "@/lib/db/users";
 import { validateProfileInput } from "@/lib/profile-input";
 
@@ -14,20 +16,29 @@ export interface AccountSummary {
   unpublished: number;
   /** Stories waiting in the review queue; admins only, otherwise 0. */
   toReview: number;
+  /** Guide profiles waiting in the review queue; admins only, otherwise 0. */
+  guidesToReview: number;
+  /** Whether they have a guide profile in any status, listed or not. */
+  hasGuideProfile: boolean;
 }
 
 /** Counts for the account menu in the dock. Null when signed out. */
 export async function getAccountSummary(): Promise<AccountSummary | null> {
   const session = await auth();
   if (!session?.user) return null;
-  const [counts, toReview] = await Promise.all([
+  const isAdmin = session.user.role === "admin";
+  const [counts, toReview, guidesToReview, guide] = await Promise.all([
     countAuthorPosts(session.user.id),
-    session.user.role === "admin" ? countPendingPosts() : Promise.resolve(0),
+    isAdmin ? countPendingPosts() : Promise.resolve(0),
+    isAdmin ? countPendingGuides() : Promise.resolve(0),
+    getOwnGuideStatus(session.user.id),
   ]);
   return {
     published: counts.published,
     unpublished: counts.draft + counts.pending + counts.rejected,
     toReview,
+    guidesToReview,
+    hasGuideProfile: guide !== null,
   };
 }
 
