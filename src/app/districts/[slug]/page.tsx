@@ -4,9 +4,11 @@ import { ViewTransition } from "react";
 import type { Metadata } from "next";
 import { districts, getDistrict } from "@/data/districts";
 import { RelatedStories } from "@/components/blog/PostCard";
+import { LocalGuides } from "@/components/guides/GuideCard";
 import { RevealTitle } from "@/components/site/RevealTitle";
 import { DistrictMapLoader } from "@/components/district-map/DistrictMapLoader";
 import { getPostsForDistrict } from "@/lib/db/blog";
+import { getGuidesForDistrict } from "@/lib/db/guides";
 import {
   getDestinationsForDistrict,
   toMapPlaces,
@@ -75,9 +77,10 @@ export default async function DistrictPage({
   const district = getDistrict(slug);
   if (!district) notFound();
 
-  const [destinations, stories] = await Promise.all([
+  const [destinations, stories, guides] = await Promise.all([
     getDestinationsForDistrict(district.id),
     getPostsForDistrict(district.id),
+    getGuidesForDistrict(district.id),
   ]);
   const mapPlaces = toMapPlaces(destinations);
   const hiddenGemCount = destinations.filter(
@@ -240,6 +243,7 @@ export default async function DistrictPage({
       </section>
 
       <RelatedStories posts={stories} placeName={district.name} />
+      <LocalGuides guides={guides} placeName={district.name} />
       </div>
     </main>
   );
