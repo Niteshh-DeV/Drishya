@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { signBlogUpload } from "@/app/blog/write/actions";
+import type { UploadSignature } from "@/lib/cloudinary-upload";
 import { LIMITS } from "@/lib/blog-input";
 import { cloudinaryUrl } from "@/lib/images";
 import type { BlogImage } from "@/lib/types";
@@ -15,10 +16,13 @@ export function ImageField({
   label,
   value,
   onChange,
+  sign = signBlogUpload,
 }: {
   label: string;
   value?: BlogImage;
   onChange: (image: BlogImage | undefined) => void;
+  /** Server action that signs the upload into the caller's folder; blog photos by default. */
+  sign?: () => Promise<{ ok: true; upload: UploadSignature } | { ok: false; error: string }>;
 }) {
   const inputId = useId();
   const [busy, setBusy] = useState(false);
@@ -39,7 +43,7 @@ export function ImageField({
     setBusy(true);
     setProgress(0);
     try {
-      const signed = await signBlogUpload();
+      const signed = await sign();
       if (!signed.ok) throw new Error(signed.error);
       const { upload: u } = signed;
 
