@@ -225,6 +225,59 @@ export interface TravelerProfile {
   posts: BlogPostSummary[];
 }
 
+/** Matches the `GuideStatus` enum in prisma/schema.prisma. */
+export type GuideStatus = "draft" | "pending" | "published" | "rejected";
+
+/** What a guide card in the directory needs. Contact details are never part of it. */
+export interface GuideSummary {
+  id: string;
+  name: string;
+  /** Uploaded portrait, else the account's Google/Facebook photo. */
+  image?: string;
+  headline: string;
+  /** Districts they work in, in the order they listed them. */
+  districtIds: string[];
+  languages: string[];
+  specialties: InterestTag[];
+  guidingSince?: number;
+}
+
+/** A published guide's public page. */
+export interface Guide extends GuideSummary {
+  about: string;
+  /** The guide's own words on what they charge; unchecked. */
+  rates?: string;
+  places: BlogPlaceLink[];
+  /** Which contact methods exist, so the page can say what it will reveal. */
+  contactMethods: ("phone" | "whatsapp" | "email")[];
+  publishedAt: string;
+}
+
+/** Handed only to signed-in visitors, by a server action. */
+export interface GuideContact {
+  name: string;
+  phone?: string;
+  whatsapp: boolean;
+  email?: string;
+}
+
+/** What the guide application form sends and edits. */
+export interface GuideProfileInput {
+  headline: string;
+  about: string;
+  guidingSince?: number;
+  photo?: BlogImage;
+  rates: string;
+  phone: string;
+  whatsapp: boolean;
+  contactEmail: string;
+  licenceNo: string;
+  districtIds: string[];
+  destinationIds: string[];
+  specialties: InterestTag[];
+  languages: string[];
+}
+
 /** A destination as offered in the writing form's place picker. */
 export interface DestinationOption {
   id: string;

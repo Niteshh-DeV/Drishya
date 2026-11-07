@@ -101,13 +101,20 @@ export function AccountButton() {
   const { name, email, image } = user;
   const initial = (name ?? email ?? "?").charAt(0).toUpperCase();
   const toReview = summary?.toReview ?? 0;
+  const guidesToReview = summary?.guidesToReview ?? 0;
   const published = summary?.published ?? 0;
 
   const links: { label: string; href: string; count?: number }[] = [
     { label: "Write a story", href: "/blog/write" },
     { label: "My stories", href: "/blog/mine", count: summary ? published + summary.unpublished : undefined },
+    { label: summary?.hasGuideProfile ? "Guide profile" : "List yourself as a guide", href: "/guide-connect/apply" },
     { label: "Profile & account", href: "/account" },
-    ...(isAdmin ? [{ label: "Review stories", href: "/admin/posts", count: toReview || undefined }] : []),
+    ...(isAdmin
+      ? [
+          { label: "Review stories", href: "/admin/posts", count: toReview || undefined },
+          { label: "Review guides", href: "/admin/guides", count: guidesToReview || undefined },
+        ]
+      : []),
   ];
 
   return (
@@ -125,7 +132,7 @@ export function AccountButton() {
         className={itemClass}
       >
         <Avatar image={image} initial={initial} size="h-7 w-7 text-xs" />
-        {isAdmin && toReview > 0 && (
+        {isAdmin && toReview + guidesToReview > 0 && (
           <span
             aria-hidden
             className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brass ring-2 ring-forest"
@@ -185,7 +192,7 @@ export function AccountButton() {
                 {item.count ? (
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                      item.href === "/admin/posts" ? "bg-brass text-forest-deep" : "bg-slate/80 text-stone"
+                      item.href.startsWith("/admin/") ? "bg-brass text-forest-deep" : "bg-slate/80 text-stone"
                     }`}
                   >
                     {item.count}

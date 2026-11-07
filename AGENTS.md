@@ -61,17 +61,18 @@ src/
       [destination]/         Destination detail page
     blog/                    Index + [slug] post page (public, prerendered)
       write/, write/[id]/, mine/   Traveler editor + "My stories" (signed in)
-    admin/posts/             Review queue (admin role only)
+    admin/posts/, admin/guides/   Review queues for stories and guides (admin role only)
     signin/, privacy/        Auth.js sign-in, privacy policy
     account/                 Profile page (name, bio, story counts, deletion) + actions.ts
     travelers/[id]/          Public traveler page (only once a story is published)
-    guide-connect/           Coming-soon page
+    guide-connect/           Guide directory; [id]/ guide page; apply/ guide's own profile form
     hidden-gems/             Hidden gems grid
   components/
     site/                    Header (floating "dock"), AccountButton, Footer, Logo, ThemeToggle,
                              PageTransition, SmoothScroll, Intro, Reveal, RevealTitle,
                              ParallaxImage, Magnetic, PageSkeleton, useDismiss
     account/                 ProfileForm
+    guides/                  GuideCard (+ GuidePortrait, LocalGuides), GuideIndex, ContactReveal, GuideForm
     hero-map/                HeroMap (scroll-driven SVG camera), DistrictNav (bottom ruler)
     district-map/            DistrictMap (react-leaflet), DistrictMapLoader (ssr:false wrapper)
     region-map/              RegionMap: the /map explorer (district filter, place list)
@@ -87,9 +88,13 @@ src/
     types.ts                 Shared types (District, Destination, Poi, …)
     pathBounds.ts, heroCamera.ts   Hero camera math
     db/                      Prisma client + data-access layer (destinations, blog,
-                             blog-authoring, blog-review, users, travelers)
+                             blog-authoring, blog-review, users, travelers,
+                             guides, guide-authoring, guide-review)
     blog-input.ts            Post limits + validation shared by editor and server actions
     profile-input.ts         Profile (name, bio) limits + validation
+    guide-input.ts           Guide profile limits, language list + validation
+    guide-pages.ts           refreshGuidePages: revalidation after a guide changes
+    cloudinary-upload.ts     Signed browser uploads (blog and guide folders)
   auth.ts                    Auth.js config (providers, adapter, session callback)
   generated/prisma/          Generated Prisma client (gitignored)
 prisma/                      schema.prisma, seed.ts, migrations/
@@ -128,12 +133,22 @@ map-data/                    Source-of-truth map data archive
 - Server actions re-check the session and validate input with `validatePostInput`; author functions take the user id and enforce ownership in the query.
 - Photos upload from the browser straight to Cloudinary with a server-signed request, into `drishya/blog/<userId>/`. Saves reject images outside that folder.
 - Publishing, unpublishing and deleting call `revalidatePath` for `/blog`, the post, and the district/destination pages showing "Stories from here".
-- **Never call `auth()` from a layout or a prerendered page** — it reads cookies and would make every route dynamic. The header reads the session client-side (`useSession`); only `/signin`, `/account`, `/blog/write*`, `/blog/mine` and `/admin/*` call `auth()`.
+- **Never call `auth()` from a layout or a prerendered page** — it reads cookies and would make every route dynamic. The header reads the session client-side (`useSession`); only `/signin`, `/account`, `/blog/write*`, `/blog/mine`, `/guide-connect/apply` and `/admin/*` call `auth()`.
 - Roles (`traveler` | `guide` | `admin`) live on `User.role`. Sessions are in the database, so role changes apply on the next request. Grant admin in Prisma Studio.
 - Profiles: travelers edit their display name and `User.bio` on `/account`. `/travelers/[id]` (prerendered, `src/lib/db/travelers.ts`) exists only for users with a published story and shows name, photo, bio, join month and published stories — never email or unpublished work. Anything that changes a published post also revalidates `/travelers/<authorId>` (`PostPaths.authorId`); saving a profile revalidates the traveler page and their post pages ("About the author").
 - Posts without an author account (`byTeam`) are labelled "From the Drishya team"; never present them as traveler stories.
 - Post rendering is shared: `PostBody` (sections), `PostCard`/`Byline`/`RelatedStories`, `PlacesInStory` + `StoryMap` (Leaflet, client-only). The editor autosaves only drafts — autosaving a pending or published post would change its review status.
 - Traveler stories are personal accounts. Label them as such, and don't treat them as verified destination facts (including in the future RAG corpus).
+
+## Guide Connect
+
+- A guide is a signed-in user with one `GuideProfile` (headline, about, guiding-since year, optional portrait, optional rates, phone/WhatsApp/contact email, admin-only licence number) plus child tables for districts, destinations, specialties (`InterestTag`) and languages (`GUIDE_LANGUAGES` in `guide-input.ts`).
+- Same review flow as stories: `draft` → `pending` → `published` | `rejected`, reviewed at `/admin/guides`. Saving a listed profile takes it off the directory until it is approved again. `User.role` is `guide` exactly while the profile is listed (`syncGuideRole`); admins keep their role.
+- A guide's places must sit in the districts they picked (checked in `saveOwnGuideProfile`).
+- **Contact details never go into prerendered HTML.** `src/lib/db/guides.ts` returns no phone or email except through `getGuideContact`, which only the `revealGuideContact` server action calls, after checking the session. The licence number is shown only on the admin page.
+- `/guide-connect` and `/guide-connect/[id]` are prerendered (`revalidate = 3600`); district and destination pages show "Local guides" (`LocalGuides`). Anything that lists, edits or unlists a guide calls `refreshGuidePages` with the paths from *before* the change.
+- Profiles and rates are the guide's own words: label them as such, and keep them out of the destination facts and the future RAG corpus. Drishya doesn't handle bookings or payments; don't add copy that implies it does.
+- Uploaded portraits go to `drishya/guides/<userId>/`; saves reject photos from anywhere else. Without one, the account's Google/Facebook photo is used.
 
 ## Content data rules (important)
 

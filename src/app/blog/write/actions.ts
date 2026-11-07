@@ -3,14 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { validatePostInput, type SaveIntent } from "@/lib/blog-input";
-import cloudinary from "@/lib/cloudinary";
+import { inFolder, signUpload, type UploadSignature } from "@/lib/cloudinary-upload";
 import {
   createAuthorPost,
   deleteAuthorPost,
   updateAuthorPost,
   type PostPaths,
 } from "@/lib/db/blog-authoring";
-import type { BlogImage, BlogPostInput } from "@/lib/types";
+import type { BlogPostInput } from "@/lib/types";
 
 type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -25,17 +25,7 @@ function uploadFolder(userId: string) {
 
 /** Photos must be Cloudinary uploads from this traveler's own folder. */
 function ownsImages(input: BlogPostInput, userId: string): boolean {
-  const base = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/`;
-  const folder = `${uploadFolder(userId)}/`;
-  const images = [input.cover, ...input.sections.map((s) => s.image)].filter(
-    (img): img is BlogImage => Boolean(img),
-  );
-  return images.every(
-    (img) =>
-      img.publicId.startsWith(folder) &&
-      img.url.startsWith(base) &&
-      img.url.includes(img.publicId),
-  );
+  return inFolder([input.cover, ...input.sections.map((s) => s.image)], uploadFolder(userId));
 }
 
 /** Published pages that showed this post need to drop or update it. */
@@ -89,42 +79,8 @@ export async function deletePost(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-/** Upload parameters the browser sends to Cloudinary unchanged; all of them are signed. */
-export interface UploadSignature {
-  cloudName: string;
-  apiKey: string;
-  timestamp: number;
-  signature: string;
-  folder: string;
-  allowedFormats: string;
-  /** Resizes the stored original so phone photos don't eat the free-tier storage. */
-  transformation: string;
-}
-
 export async function signBlogUpload(): Promise<ActionResult<{ upload: UploadSignature }>> {
   const userId = await requireUserId();
   if (!userId) return { ok: false, error: "Please sign in to upload photos." };
-
-  const params = {
-    timestamp: Math.round(Date.now() / 1000),
-    folder: uploadFolder(userId),
-    allowed_formats: "jpg,jpeg,png,webp,heic",
-    transformation: "c_limit,w_2400,h_2400",
-  };
-  const signature = cloudinary.utils.api_sign_request(
-    params,
-    process.env.CLOUDINARY_API_SECRET!,
-  );
-  return {
-    ok: true,
-    upload: {
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
-      apiKey: process.env.CLOUDINARY_API_KEY!,
-      timestamp: params.timestamp,
-      signature,
-      folder: params.folder,
-      allowedFormats: params.allowed_formats,
-      transformation: params.transformation,
-    },
-  };
+  return { ok: true, upload: signUpload(uploadFolder(userId)) };
 }

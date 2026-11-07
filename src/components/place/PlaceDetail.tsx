@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { RelatedStories } from "@/components/blog/PostCard";
 import { ReadingProgress } from "@/components/blog/ReadingProgress";
+import { LocalGuides } from "@/components/guides/GuideCard";
 import { ParallaxImage } from "@/components/site/ParallaxImage";
 import { Reveal } from "@/components/site/Reveal";
 import { RevealTitle } from "@/components/site/RevealTitle";
@@ -11,6 +12,7 @@ import type {
   Destination,
   DestinationImage,
   District,
+  GuideSummary,
 } from "@/lib/types";
 import { DestinationMapLoader } from "./DestinationMapLoader";
 import { PlaceCoverImage } from "./PlaceCoverImage";
@@ -22,6 +24,8 @@ interface PlaceDetailProps {
   nextPlace?: { slug: string; name: string };
   nextDistrict?: District;
   stories?: BlogPostSummary[];
+  /** Listed guides who named this place among the ones they know. */
+  guides?: GuideSummary[];
 }
 
 /** Keeps [label, text] rows whose text is present. */
@@ -62,6 +66,7 @@ export function PlaceDetail({
   nextPlace,
   nextDistrict,
   stories = [],
+  guides = [],
 }: PlaceDetailProps) {
   const image = coverImageUrl(destination);
   const gallery = destination.photos?.slice(1) ?? [];
@@ -351,6 +356,7 @@ export function PlaceDetail({
         )}
 
         <RelatedStories posts={stories} placeName={destination.name} />
+        <LocalGuides guides={guides} placeName={destination.name} />
 
         <RevealSection className="mx-auto mt-36 flex max-w-5xl flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-end sm:justify-between" delay={0.15}>
           <Link href="/map" className="link-draw self-start pb-0.5 text-sm uppercase tracking-[0.2em] text-muted hover:text-accent-ink">

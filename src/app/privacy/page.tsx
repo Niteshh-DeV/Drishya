@@ -59,6 +59,23 @@ export default function PrivacyPage() {
           </p>
         </section>
 
+        <section>
+          <h2 className="font-display text-2xl font-semibold text-ink">Guide profiles</h2>
+          <p className="mt-3">
+            If you list yourself as a guide, we store what you enter on{" "}
+            <Link href="/guide-connect/apply" className="underline hover:text-accent-ink">
+              your guide profile
+            </Link>
+            : headline, description, districts, places, languages, rates, the
+            contact phone number and email you give, and a licence number if
+            you add one. Nothing is public until our team reviews and lists the
+            profile. Your phone number and contact email are then shown only to
+            signed-in visitors who ask to see them; the licence number is only
+            ever seen by our reviewers. You can unlist or delete the profile at
+            any time from the same page.
+          </p>
+        </section>
+
         <section id="delete">
           <h2 className="font-display text-2xl font-semibold text-ink">Deleting your data</h2>
           <p className="mt-3">
@@ -68,7 +85,7 @@ export default function PrivacyPage() {
             </Link>{" "}
             and choose <strong>Delete my account</strong>. This permanently
             removes your profile, your linked Google or Facebook sign-in, your
-            sessions and every story you have written. You can also remove
+            sessions, every story you have written and any guide profile. You can also remove
             Drishya from the apps connected to your Google or Facebook account.
           </p>
         </section>

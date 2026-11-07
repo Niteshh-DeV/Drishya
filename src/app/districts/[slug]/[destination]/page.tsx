@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDistrict } from "@/data/districts";
 import { PlaceDetail } from "@/components/place/PlaceDetail";
 import { getPostsForDestination } from "@/lib/db/blog";
+import { getGuidesForDestination } from "@/lib/db/guides";
 import { coverImageUrl, shareImageUrl } from "@/lib/images";
 import {
   getAllDestinationParams,
@@ -66,9 +67,10 @@ export default async function DestinationPage({
   const destination = await getDestination(district.id, destinationSlug);
   if (!destination) notFound();
 
-  const [nextDestination, stories] = await Promise.all([
+  const [nextDestination, stories, guides] = await Promise.all([
     getNextDestination(destination),
     getPostsForDestination(destination.id),
+    getGuidesForDestination(destination.id),
   ]);
   const nextDistrict = nextDestination
     ? getDistrict(nextDestination.districtId)
@@ -81,6 +83,7 @@ export default async function DestinationPage({
       nextPlace={nextDestination ?? undefined}
       nextDistrict={nextDistrict}
       stories={stories}
+      guides={guides}
     />
   );
 }

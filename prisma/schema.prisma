@@ -22,6 +22,7 @@ model District {
 
   destinations Destination[]
   blogPosts    BlogPostDistrict[]
+  guides       GuideDistrict[]
 }
 
 /// Mirrors the `Destination` type in src/lib/types.ts. List-valued fields
@@ -72,6 +73,7 @@ model Destination {
   verifications  DestinationVerification[]
   images         DestinationImage[]
   blogPosts      BlogPostDestination[]
+  guides         GuideDestination[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -109,6 +111,7 @@ model InterestTag {
   name         String                @id // "Trekking"
   destinations DestinationInterest[]
   blogPosts    BlogPostTag[]
+  guides       GuideInterest[]
 }
 
 model Season {
@@ -287,6 +290,104 @@ model BlogPostTag {
   @@index([tagName])
 }
 
+// ── Guide Connect ────────────────────────────────────────────────────────
+// A local guide signs in like any traveler and fills in one profile, which
+// goes through the same review as a story before it is listed. Contact
+// details are only handed to signed-in visitors (see `revealGuideContact`).
+
+enum GuideStatus {
+  draft
+  pending
+  published
+  rejected
+}
+
+model GuideProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  /// Deleting the account removes the profile with it.
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// One line under the name, e.g. "Trekking guide for Api Nampa and the Byas valley".
+  headline     String
+  about        String @default("")
+  /// A year rather than a count, so "years guiding" never goes stale.
+  guidingSince Int?
+
+  /// Optional portrait; the account's Google/Facebook photo is used otherwise.
+  photoPublicId String?
+  photoUrl      String?
+
+  /// The guide's own words on what they charge. Shown as theirs, never checked.
+  rates        String?
+  phone        String?
+  /// Whether `phone` also takes WhatsApp messages.
+  whatsapp     Boolean @default(false)
+  contactEmail String?
+  /// Trekking guide licence number, for the reviewer only — never shown publicly.
+  licenceNo    String?
+
+  status      GuideStatus @default(draft)
+  publishedAt DateTime?
+  /// Why the team didn't approve it, shown to the guide on their apply page.
+  reviewNote  String?
+
+  districts    GuideDistrict[]
+  destinations GuideDestination[]
+  specialties  GuideInterest[]
+  languages    GuideLanguage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+/// A district the guide works in. `position` keeps the order they picked.
+model GuideDistrict {
+  guideId    String
+  guide      GuideProfile @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  districtId String
+  district   District     @relation(fields: [districtId], references: [id])
+  position   Int
+
+  @@id([guideId, districtId])
+  @@index([districtId])
+}
+
+/// A destination the guide knows well and can take travelers to.
+model GuideDestination {
+  guideId       String
+  guide         GuideProfile @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  destinationId String
+  destination   Destination  @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  position      Int
+
+  @@id([guideId, destinationId])
+  @@index([destinationId])
+}
+
+model GuideInterest {
+  guideId  String
+  guide    GuideProfile @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  tagName  String
+  tag      InterestTag  @relation(fields: [tagName], references: [name], onUpdate: Cascade)
+  position Int
+
+  @@id([guideId, tagName])
+  @@index([tagName])
+}
+
+/// A language the guide speaks; values come from `GUIDE_LANGUAGES` in src/lib/guide-input.ts.
+model GuideLanguage {
+  guideId  String
+  guide    GuideProfile @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  language String
+  position Int
+
+  @@id([guideId, language])
+}
+
 // ── Accounts (Auth.js) ───────────────────────────────────────────────────
 // User, Account, Session and VerificationToken follow the shape the
 // @auth/prisma-adapter expects; `role` is ours. Travelers sign in with
@@ -299,8 +400,8 @@ enum UserRole {
 }
 
 model User {
-  id    String @id @default(cuid())
-  name  String?
+  id            String    @id @default(cuid())
+  name          String?
   /// Facebook accounts registered with a phone number have no email.
   email         String?   @unique
   emailVerified DateTime?
@@ -309,9 +410,10 @@ model User {
   bio           String?
   role          UserRole  @default(traveler)
 
-  accounts  Account[]
-  sessions  Session[]
-  blogPosts BlogPost[]
+  accounts     Account[]
+  sessions     Session[]
+  blogPosts    BlogPost[]
+  guideProfile GuideProfile?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

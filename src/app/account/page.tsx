@@ -8,8 +8,9 @@ import { formatPostDate } from "@/components/blog/PostCard";
 import { StatusBadge } from "@/components/blog/StatusBadge";
 import { RevealTitle } from "@/components/site/RevealTitle";
 import { countAuthorPosts, getAuthorPosts } from "@/lib/db/blog-authoring";
+import { getOwnGuideStatus } from "@/lib/db/guide-authoring";
 import { deleteUser, getAccountProfile, getLinkedProviders } from "@/lib/db/users";
-import type { UserRole } from "@/lib/types";
+import type { GuideStatus, UserRole } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Your profile",
@@ -27,6 +28,13 @@ const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Admin",
 };
 
+const GUIDE_STATUS_TEXT: Record<GuideStatus, string> = {
+  draft: "Saved as a draft — send it for review when you're ready.",
+  pending: "Waiting for the team to review it.",
+  published: "Travelers can find you on Guide Connect.",
+  rejected: "Sent back by the team — see their note on your profile.",
+};
+
 function joinedLabel(iso: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     month: "long",
@@ -40,11 +48,12 @@ export default async function AccountPage() {
   if (!session?.user) redirect("/signin?callbackUrl=/account");
 
   const userId = session.user.id;
-  const [profile, providers, counts, posts] = await Promise.all([
+  const [profile, providers, counts, posts, guide] = await Promise.all([
     getAccountProfile(userId),
     getLinkedProviders(userId),
     countAuthorPosts(userId),
     getAuthorPosts(userId),
+    getOwnGuideStatus(userId),
   ]);
   if (!profile) redirect("/signin?callbackUrl=/account");
 
@@ -169,6 +178,37 @@ export default async function AccountPage() {
         </div>
 
         <section className="mx-auto mt-24 max-w-5xl">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Guide Connect</p>
+          <h2 className="font-display mt-2 border-b border-line pb-4 text-4xl text-ink">Guide profile</h2>
+          {guide ? (
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 py-5">
+              <StatusBadge status={guide.status} label={guide.status === "published" ? "Listed" : undefined} />
+              <p className="flex-1 text-sm text-muted">
+                {GUIDE_STATUS_TEXT[guide.status]}
+              </p>
+              <div className="flex gap-5 text-xs uppercase tracking-[0.18em]">
+                {guide.status === "published" && (
+                  <Link href={`/guide-connect/${guide.id}`} className="link-draw pb-0.5 text-accent-ink">
+                    View listing →
+                  </Link>
+                )}
+                <Link href="/guide-connect/apply" className="link-draw pb-0.5 text-muted hover:text-ink">
+                  Edit profile
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-6 text-sm leading-relaxed text-muted">
+              Do you lead treks or tours in Sudurpaschim?{" "}
+              <Link href="/guide-connect/apply" className="link-draw text-ink">
+                List yourself as a guide
+              </Link>{" "}
+              and travelers can find you by district and destination.
+            </p>
+          )}
+        </section>
+
+        <section className="mx-auto mt-24 max-w-5xl">
           <p className="text-[10px] uppercase tracking-[0.24em] text-muted">Private</p>
           <h2 className="font-display mt-2 border-b border-line pb-4 text-4xl text-ink">Sign-in</h2>
           <dl className="divide-y divide-line text-sm">
@@ -196,7 +236,8 @@ export default async function AccountPage() {
           <h2 className="font-display text-2xl font-semibold text-ink">Delete my account</h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
             Permanently removes your profile, sign-in links, sessions and every
-            story you have written, published or not. This cannot be undone.
+            story you have written, published or not, along with any guide profile.
+            This cannot be undone.
           </p>
           <form action={deleteAccount} className="mt-5 space-y-4">
             <label className="flex items-start gap-3 text-sm text-ink">
