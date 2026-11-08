@@ -16,7 +16,9 @@ export function SmoothScroll() {
     <ReactLenis
       root
       options={{
-        lerp: 0.09,
+        // Share of the remaining distance covered per frame (at 60fps). Higher
+        // keeps the hero camera close behind the wheel; 0.09 felt like lag.
+        lerp: 0.12,
         // Panels with their own scrollbars (the quick-facts menu, the
         // editor's text areas) scroll natively under the pointer.
         allowNestedScroll: true,
