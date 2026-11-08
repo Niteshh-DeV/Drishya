@@ -43,13 +43,29 @@ export function frameAt(stops: Frame[], p: number): Frame {
   if (t <= flyStart) return from;
   if (t >= flyEnd) return to;
 
-  const u = smootherstep((t - flyStart) / (flyEnd - flyStart));
-  return [
-    from[0] + (to[0] - from[0]) * u,
-    from[1] + (to[1] - from[1]) * u,
-    from[2] + (to[2] - from[2]) * u,
-    from[3] + (to[3] - from[3]) * u,
-  ];
+  return zoomBetween(from, to, smootherstep((t - flyStart) / (flyEnd - flyStart)));
+}
+
+/**
+ * The frame `u` (0…1) of the way from `from` to `to`, zoomed at an even rate.
+ *
+ * Blending the four numbers linearly makes a zoom-in crawl at the start and
+ * rush at the end: the overview → Darchula dive more than doubles its zoom
+ * speed on the way in. Changing the size geometrically zooms by the same
+ * factor for every bit of scroll. The centre is tied to the size, so the map
+ * still scales about the one point that stays put on screen; frames of
+ * (nearly) the same size simply pan.
+ */
+export function zoomBetween(from: Frame, to: Frame, u: number): Frame {
+  const w = from[2] * (to[2] / from[2]) ** u;
+  const h = from[3] * (to[3] / from[3]) ** u;
+  const dw = from[2] - to[2];
+  const k = Math.abs(dw) > from[2] * 1e-4 ? (from[2] - w) / dw : u;
+  const cx0 = from[0] + from[2] / 2;
+  const cy0 = from[1] + from[3] / 2;
+  const cx = cx0 + (to[0] + to[2] / 2 - cx0) * k;
+  const cy = cy0 + (to[1] + to[3] / 2 - cy0) * k;
+  return [cx - w / 2, cy - h / 2, w, h];
 }
 
 /** How far off-centre to seat the subject, as a fraction of the frame. */
