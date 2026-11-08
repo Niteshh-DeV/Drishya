@@ -188,9 +188,49 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
   const stopsRef = useRef(stops);
   stopsRef.current = stops;
 
-  const applyProgress = useCallback(
-    (p: number) => {
-      const f = frameAt(stopsRef.current, p);
+  /** District under the pointer, if any — drives the premium hover state. */
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [placeHover, setPlaceHover] = useState<MapPlace | null>(null);
+  const [placePosition, setPlacePosition] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  /** The pin a finger last tapped open; tapping it again opens the place. */
+  const touchPlaceRef = useRef<string | null>(null);
+  const placeCloseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  const closePlace = useCallback(() => {
+    clearTimeout(placeCloseTimer.current);
+    touchPlaceRef.current = null;
+    setPlaceHover(null);
+    setPlacePosition(null);
+  }, []);
+
+  /*
+   * True while the camera is actually moving; scrolling through a stop's
+   * plateau doesn't count. Changing `viewBox` re-rasterises the whole SVG every
+   * frame, so for the length of a fly we drop what is costly to redraw: the
+   * `feDropShadow` lifts (gaussian blurs), the hatch pattern and the pins. They
+   * return on settle, the pins sized for the frame the camera stopped on; a
+   * shadow arriving as the camera lands isn't something you catch. Hover is
+   * off as well (clicks still land), and an open place card closes, since
+   * its pin is flying away.
+   *
+   * Guarded by a ref so a fly costs two renders, not one per frame.
+   */
+  const [flying, setFlying] = useState(false);
+  const flyingRef = useRef(false);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  /** Width of the frame the camera last came to rest on. */
+  const [settledW, setSettledW] = useState(initial[2]);
+  const lastFrame = useRef<Frame | null>(null);
+
+  const setFrame = useCallback(
+    (f: Frame) => {
+      lastFrame.current = f;
       vx.set(f[0]);
       vy.set(f[1]);
       vw.set(f[2]);
@@ -199,38 +239,48 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
     [vx, vy, vw, vh],
   );
 
-  useMotionValueEvent(camP, "change", applyProgress);
-  // Re-frame on resize (new aspect ⇒ new stops) and on mount/restored scroll.
-  useEffect(() => {
-    applyProgress(camP.get());
-  }, [stops, applyProgress, camP]);
-
-  /*
-   * True while the camera is moving. Changing `viewBox` re-rasterises the whole
-   * SVG every frame, and the `feDropShadow` lifts below are gaussian blurs —
-   * by far the most expensive thing in that repaint, and the main reason the
-   * fly drops frames on a phone. We drop them during the fly and restore them
-   * on settle; a shadow arriving as the camera lands isn't something you catch.
-   *
-   * Guarded by a ref so a scroll burst costs two renders, not one per frame.
-   */
-  const [flying, setFlying] = useState(false);
-  const flyingRef = useRef(false);
-  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
+  const applyProgress = useCallback(
+    (p: number) => {
+      const f = frameAt(stopsRef.current, p);
+      const prev = lastFrame.current;
+      setFrame(f);
+      if (prev && f.every((v, i) => v === prev[i])) return;
+      if (!flyingRef.current) {
+        flyingRef.current = true;
+        setFlying(true);
+        setHoverId(null);
+        closePlace();
+      }
+      clearTimeout(settleTimer.current);
+      settleTimer.current = setTimeout(() => {
+        flyingRef.current = false;
+        setFlying(false);
+        setSettledW(f[2]);
+      }, 260);
+    },
+    [setFrame, closePlace],
   );
-  useMotionValueEvent(camP, "change", () => {
-    if (!flyingRef.current) {
-      flyingRef.current = true;
-      setFlying(true);
-    }
-    clearTimeout(settleTimer.current);
-    settleTimer.current = setTimeout(() => {
-      flyingRef.current = false;
-      setFlying(false);
-    }, 260);
-  });
-  useEffect(() => () => clearTimeout(settleTimer.current), []);
+
+  useMotionValueEvent(camP, "change", applyProgress);
+  /*
+   * Re-frame on resize (new aspect ⇒ new stops) and on mount/restored scroll.
+   * That's a jump, not a fly, so it never sets `flying`: on load the frame
+   * always jumps from the 16/9 fallback to the measured stage, and in dev
+   * StrictMode's remount clears the settle timer, which left the hero stuck
+   * mid-fly with the pins hidden.
+   */
+  useEffect(() => {
+    const f = frameAt(stops, camP.get());
+    setFrame(f);
+    setSettledW(f[2]);
+  }, [stops, camP, setFrame]);
+  useEffect(
+    () => () => {
+      clearTimeout(settleTimer.current);
+      clearTimeout(placeCloseTimer.current);
+    },
+    [],
+  );
 
   /** Which stop the UI considers current: 0 = overview, 1…n = districts. */
   const [stopIndex, setStopIndex] = useState(0);
@@ -242,17 +292,6 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
     syncStop(scrollYProgress.get());
   }, [syncStop, scrollYProgress]);
 
-  /** District under the pointer, if any — drives the premium hover state. */
-  const [hoverId, setHoverId] = useState<string | null>(null);
-  const [placeHover, setPlaceHover] = useState<MapPlace | null>(null);
-  const [placePosition, setPlacePosition] = useState<{ x: number; y: number } | null>(
-    null,
-  );
-  const touchPlaceRef = useRef<string | null>(null);
-  const placeCloseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
-
   const activeIndex = stopIndex - 1; // -1 while the overview is framed
   const active = activeIndex >= 0 ? districts[activeIndex] : undefined;
   const activeSvg = active ? svgById[active.id] : undefined;
@@ -262,14 +301,17 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
       ? districts.find((d) => d.id === hoverId)
       : undefined;
 
-  // Markers only show once the camera has settled, so a per-stop scalar is
-  // enough to keep pins ~13px regardless of how large the framed district is.
-  const frameW = stops[stopIndex]?.[2] ?? initial[2];
+  // Markers only show once the camera has settled, so sizing them against the
+  // frame it rests on keeps pins ~13px however large the framed district is.
   const uscale =
-    stage.w > 0 ? (MARKER_PX / MARKER_UNITS) * (frameW / stage.w) : 1;
+    stage.w > 0 ? (MARKER_PX / MARKER_UNITS) * (settledW / stage.w) : 1;
 
   const titleOpacity = useTransform(scrollYProgress, (p) =>
     clamp(1 - p / TITLE_FADE_END, 0, 1),
+  );
+  // Hidden once faded, so the empty glass pane stops blurring the map below it.
+  const titleVisibility = useTransform(titleOpacity, (o) =>
+    o > 0 ? "visible" : "hidden",
   );
   const titleY = useTransform(scrollYProgress, [0, TITLE_FADE_END], [0, -28]);
   const railScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
@@ -296,21 +338,29 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
     if (active) router.push(`/districts/${active.slug}`);
   };
 
-  const setPlaceAtPointer = useCallback(
-    (destination: MapPlace | null, event?: React.PointerEvent<SVGGElement>) => {
+  /** Shows the card for `destination`, anchored on its pin rather than the pointer. */
+  const showPlace = useCallback((destination: MapPlace, pin: Element) => {
+    const el = stageRef.current;
+    if (!el) return;
+    clearTimeout(placeCloseTimer.current);
+    const s = el.getBoundingClientRect();
+    const r = pin.getBoundingClientRect();
+    setPlaceHover(destination);
+    setPlacePosition({
+      x: r.left + r.width / 2 - s.left,
+      y: r.top + r.height / 2 - s.top,
+    });
+  }, []);
+
+  // Leaving a pin closes its card after a short grace period, so the pointer
+  // can travel onto the card.
+  const hoverPlace = useCallback(
+    (destination: MapPlace | null, pin?: Element) => {
+      if (destination && pin) return showPlace(destination, pin);
       clearTimeout(placeCloseTimer.current);
-      if (!destination || !event || !stageRef.current) {
-        placeCloseTimer.current = setTimeout(() => {
-          setPlaceHover(null);
-          setPlacePosition(null);
-        }, 140);
-        return;
-      }
-      const rect = stageRef.current.getBoundingClientRect();
-      setPlaceHover(destination);
-      setPlacePosition({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+      placeCloseTimer.current = setTimeout(closePlace, 140);
     },
-    [],
+    [showPlace, closePlace],
   );
 
   const keepPlaceCardOpen = useCallback(() => {
@@ -318,20 +368,16 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
   }, []);
 
   const openPlace = useCallback(
-    (destination: MapPlace, event?: React.PointerEvent<SVGGElement>) => {
-      if (event?.pointerType === "touch") {
-        if (touchPlaceRef.current === destination.id) {
-          router.push(destinationHref(destination));
-          touchPlaceRef.current = null;
-        } else {
-          touchPlaceRef.current = destination.id;
-          setPlaceAtPointer(destination, event);
-        }
+    (destination: MapPlace, touch: boolean, pin?: Element) => {
+      // On a phone the first tap previews; tapping the same pin again opens it.
+      if (touch && pin && touchPlaceRef.current !== destination.id) {
+        showPlace(destination, pin);
+        touchPlaceRef.current = destination.id;
         return;
       }
       router.push(destinationHref(destination));
     },
-    [router, setPlaceAtPointer],
+    [router, showPlace],
   );
 
   return (
@@ -356,14 +402,22 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
           } else if (e.key === "Enter") {
             e.preventDefault();
             goActive();
+          } else if (e.key === "Escape") {
+            closePlace();
           }
         }}
         onPointerLeave={() => setHoverId(null)}
+        // A tap anywhere off a tapped-open place card closes it.
+        onClick={() => {
+          if (touchPlaceRef.current) closePlace();
+        }}
         className="paper-texture sticky top-0 h-[100dvh] w-full overflow-hidden outline-none ring-inset ring-brand/40 focus-visible:ring-2"
       >
         <motion.svg
           viewBox={viewBox}
-          className="absolute inset-0 h-full w-full"
+          // Its own GPU layer, so a camera frame redraws the map alone, not
+          // the paper and vignette around it.
+          className="absolute inset-0 h-full w-full will-change-transform"
           preserveAspectRatio="xMidYMid slice"
           /*
            * The viewBox is framed against the measured viewport, which the server
@@ -393,13 +447,6 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
                 floodOpacity="0.22"
               />
             </filter>
-            <filter id="marker-glow" x="-250%" y="-250%" width="600%" height="600%">
-              <feGaussianBlur stdDeviation="2.8" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
             <pattern
               id="hatch"
               width="7"
@@ -426,6 +473,12 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
             const isActive = d.id === active?.id;
             const isHover = d.id === hoverId && !isActive;
             const isOverview = !active;
+            /*
+             * Dimming goes on the fill and stroke separately: opacity on a
+             * path with both makes the browser draw it into an offscreen
+             * layer first, eight of them on every frame of a fly.
+             */
+            const dim = isActive || isOverview ? 1 : isHover ? 0.92 : 0.4;
             return (
               <motion.path
                 key={d.id}
@@ -443,16 +496,18 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
                 }
                 className="cursor-pointer"
                 onPointerEnter={(e) => {
-                  // Mouse only — on touch a tap would leave the hover state stuck.
-                  if (e.pointerType === "mouse") setHoverId(d.id);
+                  // Mouse only — on touch a tap would leave the hover state
+                  // stuck. Not mid-fly either: districts sliding under a
+                  // resting mouse would re-render the hero on every one.
+                  if (e.pointerType === "mouse" && !flyingRef.current) setHoverId(d.id);
                 }}
-                onClick={() =>
-                  isActive
-                    ? goActive()
-                    : goToStop(
-                        districts.findIndex((x) => x.id === d.id) + 1,
-                      )
-                }
+                onClick={() => {
+                  // With a tapped-open place card up, a tap on the map only
+                  // closes it (the stage's click does that).
+                  if (touchPlaceRef.current) return;
+                  if (isActive) goActive();
+                  else goToStop(districts.findIndex((x) => x.id === d.id) + 1);
+                }}
                 initial={false}
                 animate={{
                   fill: isActive
@@ -466,8 +521,8 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
                       ? HOVER_STROKE
                       : BORDER_STROKE,
                   strokeWidth: isActive ? 1.5 : isHover ? 1.6 : 1,
-                  strokeOpacity: isActive ? 0.7 : isHover ? 0.9 : 0.45,
-                  opacity: isActive || isOverview ? 1 : isHover ? 0.92 : 0.4,
+                  fillOpacity: dim,
+                  strokeOpacity: (isActive ? 0.7 : isHover ? 0.9 : 0.45) * dim,
                   // The hovered district lifts off the paper a touch.
                   y: isHover ? -3 : 0,
                 }}
@@ -482,12 +537,16 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
           })}
 
           {/* Hatch overlay on the active district for the drawn-in look. */}
-          {activeSvg && (
-            <path
+          {activeSvg && active && !flying && (
+            <motion.path
+              key={`hatch-${active.id}`}
               d={activeSvg.d}
               fill="url(#hatch)"
               stroke="none"
               className="pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reduced ? 0 : 0.3 }}
             />
           )}
 
@@ -519,7 +578,8 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
             places={places}
             markerScale={uscale}
             activeDistrictId={active?.id}
-            onHover={setPlaceAtPointer}
+            hidden={flying}
+            onHover={hoverPlace}
             onOpen={openPlace}
           />
         </motion.svg>
@@ -533,13 +593,16 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
         <PlaceHoverCard
           destination={placeHover}
           position={placePosition}
+          stage={stage}
           onPointerEnter={keepPlaceCardOpen}
-          onPointerLeave={() => setPlaceAtPointer(null)}
+          onPointerLeave={() => hoverPlace(null)}
         />
 
         {/* ── Landing intro card ─────────────────────────────────────── */}
         <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 sm:inset-x-auto sm:left-8 sm:px-0">
-          <motion.div style={{ opacity: titleOpacity, y: titleY }}>
+          <motion.div
+            style={{ opacity: titleOpacity, y: titleY, visibility: titleVisibility }}
+          >
             <div className="glass mx-auto max-w-xl rounded-3xl px-7 py-8 text-center sm:mx-0 sm:max-w-md sm:text-left">
               <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-accent-ink">
                 Sudurpaschim Province · Nepal
@@ -566,13 +629,17 @@ export function HeroMap({ places }: { places: MapPlace[] }) {
 
         {/* ── District info card ───────────────────────────────────────── */}
         <div className="pointer-events-none absolute left-4 right-4 top-[calc(var(--header-h)+1rem)] z-20 sm:right-auto sm:left-8 sm:top-1/2 sm:max-w-sm sm:-translate-y-1/2">
+          {/*
+           * No blur in this swap: it lands mid-flight, and blurring a pane
+           * that is already frosting the moving map costs a frame or two.
+           */}
           <AnimatePresence mode="wait">
             {active && (
               <motion.div
                 key={active.id}
-                initial={{ opacity: 0, y: 14, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -14, filter: "blur(8px)" }}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -14 }}
                 transition={{ duration: reduced ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
                 className="glass-strong rounded-3xl px-6 py-5"
               >
