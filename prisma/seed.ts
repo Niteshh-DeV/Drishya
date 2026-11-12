@@ -27,7 +27,9 @@ import { baitadiDestinations } from "./data/baitadi";
 import { bajuraDestinations } from "./data/bajura";
 import { bajhangDestinations } from "./data/bajhang";
 import { dadeldhuraDestinations } from "./data/dadeldhura";
+import { dotiDestinations } from "./data/doti";
 import { kailaliDestinations } from "./data/kailali";
+import { kanchanpurDestinations } from "./data/kanchanpur";
 
 const allDestinations = [
   ...achhamDestinations,
@@ -35,7 +37,9 @@ const allDestinations = [
   ...bajuraDestinations,
   ...bajhangDestinations,
   ...dadeldhuraDestinations,
+  ...dotiDestinations,
   ...kailaliDestinations,
+  ...kanchanpurDestinations,
 ];
 
 const adapter = new PrismaNeon({
