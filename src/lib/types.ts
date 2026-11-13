@@ -113,6 +113,31 @@ export interface MapPlace {
   coverUrl?: string;
 }
 
+/**
+ * A destination as the recommendation engine scores it (`src/lib/recommend.ts`):
+ * the fields the weights read, plus enough for a result card. `position` is
+ * the confirmed pin only — never filled in from the district centre.
+ */
+export interface RecommendPlace {
+  id: string;
+  slug: string;
+  districtId: string;
+  name: string;
+  shortDescription: string;
+  position: [number, number] | null;
+  interestTags: InterestTag[];
+  bestSeasons: Season[];
+  budget: BudgetLevel;
+  hiddenGem: boolean;
+  /** The first category, for the card's label. */
+  category?: Category;
+  coverUrl?: string;
+  /** Has a long description, not just the short one. */
+  described: boolean;
+  /** Fields the source flagged as unconfirmed, as in `Destination.verify`. */
+  verify: string[];
+}
+
 /** Matches the `UserRole` enum in prisma/schema.prisma. */
 export type UserRole = "traveler" | "guide" | "admin";
 
