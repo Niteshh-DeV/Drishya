@@ -9,6 +9,7 @@
     "postinstall": "prisma generate",
     "build": "next build",
     "cloudinary:seed": "tsx scripts/seed-cloudinary.ts",
+    "recommend:eval": "tsx scripts/evaluate-recommendations.ts",
     "start": "next start"
   },
   "dependencies": {
