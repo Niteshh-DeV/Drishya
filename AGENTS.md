@@ -24,7 +24,8 @@ Prefer changes that are small, reviewable, and consistent with what already exis
 - Prisma 7 + Neon (Postgres) for content data
 - Auth.js v5 (`next-auth@5` beta) with Google + Facebook sign-in, Prisma adapter, database sessions
 - Cloudinary for destination photos and blog uploads
-- Planned, not yet built: Upstash Vector + sentence-transformers + Groq/OpenRouter (RAG assistant), recommendation engine
+- Recommendation engine: plain TypeScript weighted scoring (`src/lib/recommend.ts`), no extra services
+- Planned, not yet built: Upstash Vector + sentence-transformers + Groq/OpenRouter (RAG assistant)
 - Hosting: Vercel. Everything must stay on free tiers.
 
 ## Commands
@@ -67,6 +68,7 @@ src/
     travelers/[id]/          Public traveler page (only once a story is published)
     guide-connect/           Guide directory; [id]/ guide page; apply/ guide's own profile form
     hidden-gems/             Hidden gems grid
+    plan/                    Trip planner (recommendation engine), prerendered
   components/
     site/                    Header (floating "dock"), AccountButton, Footer, Logo, ThemeToggle,
                              PageTransition, SmoothScroll, Intro, Reveal, RevealTitle,
@@ -76,6 +78,8 @@ src/
     hero-map/                HeroMap (scroll-driven SVG camera), DistrictNav (bottom ruler)
     district-map/            DistrictMap (react-leaflet), DistrictMapLoader (ssr:false wrapper)
     region-map/              RegionMap: the /map explorer (district filter, place list)
+    plan/                    TripPlanner (form + shortlist), PlanMap (+ Loader), SuggestionCard,
+                             SimilarPlaces ("Places like this" on destination pages)
     map/                     Shared Leaflet parts: leaflet.ts (tiles, pins, bounds), PlaceMarkers,
                              MapPlaceCard, MapGestures, usePlacePreview
   data/
@@ -94,6 +98,7 @@ src/
     profile-input.ts         Profile (name, bio) limits + validation
     guide-input.ts           Guide profile limits, language list + validation
     guide-pages.ts           refreshGuidePages: revalidation after a guide changes
+    recommend.ts             Recommendation engine: weights, recommend(), similarPlaces(), season months
     cloudinary-upload.ts     Signed browser uploads (blog and guide folders)
   auth.ts                    Auth.js config (providers, adapter, session callback)
   generated/prisma/          Generated Prisma client (gitignored)
@@ -149,6 +154,18 @@ map-data/                    Source-of-truth map data archive
 - `/guide-connect` and `/guide-connect/[id]` are prerendered (`revalidate = 3600`); district and destination pages show "Local guides" (`LocalGuides`). Anything that lists, edits or unlists a guide calls `refreshGuidePages` with the paths from *before* the change.
 - Profiles and rates are the guide's own words: label them as such, and keep them out of the destination facts and the future RAG corpus. Drishya doesn't handle bookings or payments; don't add copy that implies it does.
 - Uploaded portraits go to `drishya/guides/<userId>/`; saves reject photos from anywhere else. Without one, the account's Google/Facebook photo is used.
+
+## Recommendation engine
+
+- `src/lib/recommend.ts` is pure (no React, no Prisma): `recommend(places, prefs)` for `/plan`, `similarPlaces(place, places)` for "Places like this". Keep it that way so the RAG assistant can call it later as a tool.
+- Score = weighted average of the factors the traveller set (`WEIGHTS`: interests 40, season 25, distance 20, budget 15, hidden gems 10 when asked); unset factors drop out and the rest rescale. Sharing none of the chosen interests, or costing two or more budget levels over the ceiling, rules a place out; one level over is shown as "a stretch".
+- The first nine results take at most three places per district (`spread`). Khaptad's per-district entries count as one place (`samePlace`: same name once a "(… Section)" qualifier is dropped); identical names in two districts stay separate.
+- Distances are straight-line (haversine) and shown rounded, never as road distances. A place with `position: null` is measured from its district's centre for ranking only (`whereabouts`), never closer than two thirds of the district's equivalent radius, so it doesn't sit 0 km from a traveller starting in that district. It is never pinned. Once its real coordinates are in the database it is pinned and measured from them automatically.
+- Interest matches are weighted by tag order (first tag 1.0, each later one 0.1 less, floor 0.5). A budget, season list or hidden-gem flag named in the place's `verify` list scores a neutral 0.5 and never rules the place out. Equal scores are ordered by `completeness` (photo, pin, long description, nothing to verify), then name.
+- `npm run recommend:eval` scores the engine against the personas in `scripts/recommendation-personas.ts` (`--weights interests=0.5,…` to compare weight sets, `--ids` to list destination ids). `expected` lists come from the team's local knowledge; never fill them from the engine's own output.
+- `/plan` stays prerendered: `getRecommendPlaces()` passes every place as props, and `TripPlanner` scores in the browser. Preferences live in the URL (`?interests=…&season=…&budget=…&from=<district>&gems=1`) via `history.replaceState`, so `TripPlanner` reads `useSearchParams` inside a `<Suspense>`. A shared location stays in the browser and is never written to the URL.
+- Season ↔ month mapping (`SEASON_MONTHS`) is the planner's own: Spring Mar–May, Summer June, Monsoon Jul–Sep, Autumn Oct–Nov, Winter Dec–Feb. The default season is the current month's.
+- Only destination content feeds the engine, never stories or guide profiles.
 
 ## Content data rules (important)
 

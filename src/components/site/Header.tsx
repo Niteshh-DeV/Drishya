@@ -24,6 +24,7 @@ type NavItem =
 const ITEMS: NavItem[] = [
   { label: "Map", href: "/map", match: ["/map", "/districts", "/place"] },
   { label: "Hidden Gems", href: "/hidden-gems", match: ["/hidden-gems"] },
+  { label: "Plan a Trip", href: "/plan", match: ["/plan"] },
   { label: "Field Notes", href: "/blog", match: ["/blog", "/travelers"] },
   { label: "Guides", href: "/guide-connect", match: ["/guide-connect"] },
   { label: "Assistant", soon: true },

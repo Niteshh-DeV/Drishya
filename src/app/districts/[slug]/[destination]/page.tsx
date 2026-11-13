@@ -9,6 +9,7 @@ import {
   getAllDestinationParams,
   getDestination,
   getNextDestination,
+  getSimilarDestinations,
 } from "@/lib/db/destinations";
 
 export const revalidate = 3600;
@@ -67,10 +68,11 @@ export default async function DestinationPage({
   const destination = await getDestination(district.id, destinationSlug);
   if (!destination) notFound();
 
-  const [nextDestination, stories, guides] = await Promise.all([
+  const [nextDestination, stories, guides, similar] = await Promise.all([
     getNextDestination(destination),
     getPostsForDestination(destination.id),
     getGuidesForDestination(destination.id),
+    getSimilarDestinations(destination.id),
   ]);
   const nextDistrict = nextDestination
     ? getDistrict(nextDestination.districtId)
@@ -84,6 +86,7 @@ export default async function DestinationPage({
       nextDistrict={nextDistrict}
       stories={stories}
       guides={guides}
+      similar={similar}
     />
   );
 }

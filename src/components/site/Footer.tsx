@@ -10,6 +10,7 @@ const EXPLORE_LINKS = [
   { label: "Home", href: "/" },
   { label: "Map", href: "/map" },
   { label: "Hidden Gems", href: "/hidden-gems" },
+  { label: "Plan a Trip", href: "/plan" },
   { label: "Field Notes", href: "/blog" },
   { label: "Guide Connect", href: "/guide-connect" },
 ];

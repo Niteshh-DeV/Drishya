@@ -8,6 +8,7 @@
 import { cache } from "react";
 import { prisma } from "./prisma";
 import { coverImageUrl } from "@/lib/images";
+import { similarPlaces, type SimilarPlace } from "@/lib/recommend";
 import type {
   BudgetLevel,
   Category,
@@ -16,6 +17,7 @@ import type {
   DestinationOption,
   InterestTag,
   MapPlace,
+  RecommendPlace,
   Season,
 } from "@/lib/types";
 import type {
@@ -45,6 +47,28 @@ const mapPlaceSelect = {
   lon: true,
   hiddenGem: true,
   images: { orderBy: { sortOrder: "asc" }, take: 1, select: { secureUrl: true } },
+} satisfies Prisma.DestinationSelect;
+
+/**
+ * What the recommendation engine scores, plus the cover and first category
+ * for a card. The long description is read only to note that there is one.
+ */
+const recommendSelect = {
+  id: true,
+  slug: true,
+  districtId: true,
+  name: true,
+  shortDescription: true,
+  longDescription: true,
+  lat: true,
+  lon: true,
+  budget: true,
+  hiddenGem: true,
+  categories: { orderBy: { position: "asc" }, take: 1, select: { categoryName: true } },
+  interestTags: { orderBy: { position: "asc" }, select: { tagName: true } },
+  bestSeasons: { orderBy: { position: "asc" }, select: { seasonName: true } },
+  images: { orderBy: { sortOrder: "asc" }, take: 1, select: { secureUrl: true } },
+  verifications: { orderBy: { field: "asc" }, select: { field: true } },
 } satisfies Prisma.DestinationSelect;
 
 const hasPosition = { lat: { not: null }, lon: { not: null } } satisfies Prisma.DestinationWhereInput;
@@ -221,6 +245,41 @@ export async function getMapPlaces(districtId?: string): Promise<MapPlace[]> {
     select: mapPlaceSelect,
   });
   return rows.map(toMapPlace);
+}
+
+/**
+ * Every destination as the recommendation engine scores it, placed or not.
+ * Cached per request: a destination page ranks its "Places like this" from
+ * the same list.
+ */
+export const getRecommendPlaces = cache(async (): Promise<RecommendPlace[]> => {
+  const rows = await prisma.destination.findMany({
+    orderBy: [{ districtId: "asc" }, { name: "asc" }],
+    select: recommendSelect,
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    districtId: r.districtId,
+    name: r.name,
+    shortDescription: r.shortDescription,
+    position: r.lat != null && r.lon != null ? [r.lat, r.lon] : null,
+    interestTags: r.interestTags.map((t) => t.tagName as InterestTag),
+    bestSeasons: r.bestSeasons.map((s) => s.seasonName as Season),
+    budget: r.budget as BudgetLevel,
+    hiddenGem: r.hiddenGem,
+    category: r.categories[0]?.categoryName as Category | undefined,
+    coverUrl: r.images[0]?.secureUrl,
+    described: Boolean(r.longDescription?.trim()),
+    verify: r.verifications.map((v) => v.field),
+  }));
+});
+
+/** The places most like this one, for the "Places like this" block on its page. */
+export async function getSimilarDestinations(destinationId: string): Promise<SimilarPlace[]> {
+  const places = await getRecommendPlaces();
+  const place = places.find((p) => p.id === destinationId);
+  return place ? similarPlaces(place, places) : [];
 }
 
 export async function getHiddenGems(): Promise<Destination[]> {

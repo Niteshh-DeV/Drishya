@@ -2,10 +2,12 @@ import Link from "next/link";
 import { RelatedStories } from "@/components/blog/PostCard";
 import { ReadingProgress } from "@/components/blog/ReadingProgress";
 import { LocalGuides } from "@/components/guides/GuideCard";
+import { SimilarPlaces } from "@/components/plan/SimilarPlaces";
 import { ParallaxImage } from "@/components/site/ParallaxImage";
 import { Reveal } from "@/components/site/Reveal";
 import { RevealTitle } from "@/components/site/RevealTitle";
 import { cloudinaryUrl, coverImageUrl } from "@/lib/images";
+import type { SimilarPlace } from "@/lib/recommend";
 import { displayTitleSize } from "@/lib/typography";
 import type {
   BlogPostSummary,
@@ -26,6 +28,8 @@ interface PlaceDetailProps {
   stories?: BlogPostSummary[];
   /** Listed guides who named this place among the ones they know. */
   guides?: GuideSummary[];
+  /** Ranked by the recommendation engine, for "Places like this". */
+  similar?: SimilarPlace[];
 }
 
 /** Keeps [label, text] rows whose text is present. */
@@ -67,6 +71,7 @@ export function PlaceDetail({
   nextDistrict,
   stories = [],
   guides = [],
+  similar = [],
 }: PlaceDetailProps) {
   const image = coverImageUrl(destination);
   const gallery = destination.photos?.slice(1) ?? [];
@@ -357,6 +362,7 @@ export function PlaceDetail({
 
         <RelatedStories posts={stories} placeName={destination.name} />
         <LocalGuides guides={guides} placeName={destination.name} />
+        <SimilarPlaces places={similar} />
 
         <RevealSection className="mx-auto mt-36 flex max-w-5xl flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-end sm:justify-between" delay={0.15}>
           <Link href="/map" className="link-draw self-start pb-0.5 text-sm uppercase tracking-[0.2em] text-muted hover:text-accent-ink">
