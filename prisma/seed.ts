@@ -27,6 +27,7 @@ import { baitadiDestinations } from "./data/baitadi";
 import { bajuraDestinations } from "./data/bajura";
 import { bajhangDestinations } from "./data/bajhang";
 import { dadeldhuraDestinations } from "./data/dadeldhura";
+import { darchulaDestinations } from "./data/darchula";
 import { dotiDestinations } from "./data/doti";
 import { kailaliDestinations } from "./data/kailali";
 import { kanchanpurDestinations } from "./data/kanchanpur";
@@ -37,6 +38,7 @@ const allDestinations = [
   ...bajuraDestinations,
   ...bajhangDestinations,
   ...dadeldhuraDestinations,
+  ...darchulaDestinations,
   ...dotiDestinations,
   ...kailaliDestinations,
   ...kanchanpurDestinations,
